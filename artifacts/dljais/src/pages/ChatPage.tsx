@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useParams, useLocation } from "wouter";
 import {
   useGetConversation,
@@ -6,22 +6,22 @@ import {
   getListConversationsQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Send, Mic, MicOff, Paperclip, Sparkles, ChevronDown, Check } from "lucide-react";
+import { Send, Mic, MicOff, Plus, Sparkles, ChevronDown, Check, AudioLines } from "lucide-react";
 import { ActionCard } from "@/components/ActionCard";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
 const SUGGESTION_CHIPS = [
-  "Post a new reel to Instagram",
-  "Check crypto trading signals",
-  "Launch a Google Ads campaign",
-  "Order food for delivery",
+  "Post to Instagram",
+  "Trade signals",
+  "Run Google Ads",
+  "Order food",
 ];
 
 const MODELS = [
-  { id: "claude-opus-4-7", label: "Claude Opus", provider: "Anthropic", color: "text-orange-500" },
-  { id: "claude-sonnet-4-6", label: "Claude Sonnet", provider: "Anthropic", color: "text-orange-400" },
-  { id: "claude-haiku-4-5", label: "Claude Haiku", provider: "Anthropic", color: "text-orange-300" },
+  { id: "claude-opus-4-7", label: "Opus", desc: "Most capable", color: "text-orange-500" },
+  { id: "claude-sonnet-4-6", label: "Sonnet", desc: "Recommended", color: "text-orange-400" },
+  { id: "claude-haiku-4-5", label: "Haiku", desc: "Fastest", color: "text-orange-300" },
 ];
 
 interface MessageItem {
@@ -33,15 +33,17 @@ interface MessageItem {
 }
 
 interface ActionCardData {
-  id: number;
-  title: string;
-  platform: string;
-  intent: string;
-  status: string;
-  riskLevel: string;
-  estimatedCost?: string | null;
-  details: string;
-  preview?: string | null;
+  id: number; title: string; platform: string; intent: string;
+  status: string; riskLevel: string; estimatedCost?: string | null;
+  details: string; preview?: string | null;
+}
+
+// Web Speech API types
+declare global {
+  interface Window {
+    SpeechRecognition: typeof SpeechRecognition;
+    webkitSpeechRecognition: typeof SpeechRecognition;
+  }
 }
 
 export default function ChatPage() {
@@ -54,14 +56,16 @@ export default function ChatPage() {
   const [input, setInput] = useState("");
   const [selectedModel, setSelectedModel] = useState(MODELS[1]);
   const [modelPickerOpen, setModelPickerOpen] = useState(false);
+  const [addMenuOpen, setAddMenuOpen] = useState(false);
   const [isVoiceActive, setIsVoiceActive] = useState(false);
+  const [voiceTranscript, setVoiceTranscript] = useState("");
   const [localMessages, setLocalMessages] = useState<MessageItem[]>([]);
   const [localActionCards, setLocalActionCards] = useState<Map<number, ActionCardData>>(new Map());
   const [isSending, setIsSending] = useState(false);
   const [streamingText, setStreamingText] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const modelPickerRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   const { data: conversation, refetch } = useGetConversation(
     conversationId!,
@@ -69,25 +73,59 @@ export default function ChatPage() {
   );
 
   useEffect(() => {
-    if (conversation?.messages) {
-      setLocalMessages(conversation.messages as MessageItem[]);
-    }
+    if (conversation?.messages) setLocalMessages(conversation.messages as MessageItem[]);
   }, [conversation]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [localMessages, streamingText]);
 
-  // Close model picker on outside click
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (modelPickerRef.current && !modelPickerRef.current.contains(e.target as Node)) {
-        setModelPickerOpen(false);
-      }
+  // Voice recognition setup
+  const startVoice = useCallback(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast({ title: "Voice not supported", description: "Use Chrome or Safari for voice input.", variant: "destructive" });
+      return;
     }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
+    const rec = new SpeechRecognition();
+    rec.continuous = true;
+    rec.interimResults = true;
+    rec.lang = "en-US";
+
+    rec.onresult = (e) => {
+      let interim = "";
+      let final = "";
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const t = e.results[i][0].transcript;
+        if (e.results[i].isFinal) final += t;
+        else interim += t;
+      }
+      setVoiceTranscript(interim);
+      if (final) {
+        setInput((prev) => (prev + " " + final).trim());
+        setVoiceTranscript("");
+      }
+    };
+
+    rec.onerror = () => stopVoice();
+    rec.onend = () => setIsVoiceActive(false);
+
+    recognitionRef.current = rec;
+    rec.start();
+    setIsVoiceActive(true);
+  }, [toast]);
+
+  const stopVoice = useCallback(() => {
+    recognitionRef.current?.stop();
+    recognitionRef.current = null;
+    setIsVoiceActive(false);
+    setVoiceTranscript("");
   }, []);
+
+  const toggleVoice = () => {
+    if (isVoiceActive) stopVoice();
+    else startVoice();
+  };
 
   const createConversation = async (title: string): Promise<number> => {
     const res = await fetch(`${import.meta.env.BASE_URL}api/conversations`, {
@@ -95,51 +133,39 @@ export default function ChatPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title: title.slice(0, 60) }),
     });
-    const conv = await res.json();
-    return conv.id;
+    return (await res.json()).id;
   };
 
   const handleSend = async () => {
-    const text = input.trim();
+    const text = (input + " " + voiceTranscript).trim();
     if (!text || isSending) return;
 
+    if (isVoiceActive) stopVoice();
     setInput("");
+    setVoiceTranscript("");
     setIsSending(true);
     setStreamingText("");
 
     try {
-      let activeConvId = conversationId;
-
-      if (!activeConvId) {
-        activeConvId = await createConversation(text);
+      let convId = conversationId;
+      if (!convId) {
+        convId = await createConversation(text);
         queryClient.invalidateQueries({ queryKey: getListConversationsQueryKey() });
-        setLocation(`/chat/${activeConvId}`);
+        setLocation(`/chat/${convId}`);
         await new Promise((r) => setTimeout(r, 80));
       }
 
-      // Optimistic user message
       const optimisticId = Date.now();
-      const optimisticUser: MessageItem = {
-        id: optimisticId,
-        role: "user",
-        content: text,
-        createdAt: new Date().toISOString(),
-      };
-      setLocalMessages((prev) => [...prev, optimisticUser]);
+      setLocalMessages((prev) => [...prev, {
+        id: optimisticId, role: "user", content: text, createdAt: new Date().toISOString(),
+      }]);
 
-      // Stream from Claude
       const response = await fetch(
-        `${import.meta.env.BASE_URL}api/ai/conversations/${activeConvId}/messages`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ content: text, model: selectedModel.id }),
-        }
+        `${import.meta.env.BASE_URL}api/ai/conversations/${convId}/messages`,
+        { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ content: text, model: selectedModel.id }) }
       );
 
-      if (!response.ok || !response.body) {
-        throw new Error("Stream failed");
-      }
+      if (!response.ok || !response.body) throw new Error("Stream failed");
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
@@ -148,23 +174,12 @@ export default function ChatPage() {
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split("\n");
-
+        const lines = decoder.decode(value, { stream: true }).split("\n");
         for (const line of lines) {
           if (!line.startsWith("data: ")) continue;
-          const data = line.slice(6).trim();
-          if (!data) continue;
-
           try {
-            const parsed = JSON.parse(data);
-
-            if (parsed.content) {
-              streamed += parsed.content;
-              setStreamingText(streamed);
-            }
-
+            const parsed = JSON.parse(line.slice(6).trim());
+            if (parsed.content) { streamed += parsed.content; setStreamingText(streamed); }
             if (parsed.done) {
               setStreamingText("");
               setLocalMessages((prev) => {
@@ -172,25 +187,17 @@ export default function ChatPage() {
                 return [...without, parsed.userMessage, parsed.aiMessage];
               });
               if (parsed.actionCard) {
-                setLocalActionCards((prev) =>
-                  new Map(prev).set(parsed.aiMessage.id, parsed.actionCard)
-                );
+                setLocalActionCards((prev) => new Map(prev).set(parsed.aiMessage.id, parsed.actionCard));
               }
-              queryClient.invalidateQueries({ queryKey: getGetConversationQueryKey(activeConvId!) });
+              queryClient.invalidateQueries({ queryKey: getGetConversationQueryKey(convId!) });
               queryClient.invalidateQueries({ queryKey: getListConversationsQueryKey() });
             }
-
-            if (parsed.error) {
-              throw new Error(parsed.error);
-            }
-          } catch (e) {
-            if (e instanceof SyntaxError) continue;
-            throw e;
-          }
+            if (parsed.error) throw new Error(parsed.error);
+          } catch (e) { if (e instanceof SyntaxError) continue; throw e; }
         }
       }
-    } catch (err) {
-      toast({ title: "Error", description: "Failed to get a response. Please try again.", variant: "destructive" });
+    } catch {
+      toast({ title: "Error", description: "Could not get a response. Try again.", variant: "destructive" });
       setInput(text);
       setStreamingText("");
     } finally {
@@ -199,33 +206,24 @@ export default function ChatPage() {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
   };
 
-  const handleChipClick = (chip: string) => {
-    setInput(chip);
-    inputRef.current?.focus();
-  };
-
-  const isEmpty = !conversationId || (localMessages.length === 0 && !streamingText);
+  const isEmpty = !conversationId && localMessages.length === 0 && !streamingText;
 
   return (
     <div className="flex flex-col h-full">
-      {/* Messages area */}
+      {/* Messages */}
       <div className="flex-1 overflow-y-auto">
         {isEmpty ? (
-          <EmptyState onChipClick={handleChipClick} />
+          <EmptyState onChipClick={(c) => { setInput(c); inputRef.current?.focus(); }} />
         ) : (
-          <div className="max-w-[750px] mx-auto px-4 py-6 space-y-1">
+          <div className="max-w-[700px] mx-auto px-4 py-4 space-y-1 pb-4">
             {localMessages.map((msg) => (
               <div key={msg.id}>
                 <MessageBubble message={msg} />
                 {msg.role === "assistant" && localActionCards.has(msg.id) && (
-                  <ActionCard
-                    {...localActionCards.get(msg.id)!}
+                  <ActionCard {...localActionCards.get(msg.id)!}
                     estimatedCost={localActionCards.get(msg.id)!.estimatedCost ?? null}
                     preview={localActionCards.get(msg.id)!.preview ?? null}
                     onUpdate={refetch}
@@ -233,23 +231,16 @@ export default function ChatPage() {
                 )}
               </div>
             ))}
-
-            {/* Streaming indicator */}
             {isSending && (
               <div className="flex items-start gap-3 mt-2">
                 <div className="w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0 mt-0.5">
                   <Sparkles size={13} className="text-primary" />
                 </div>
-                <div className="flex-1 text-[14px] text-foreground leading-[1.65]">
-                  {streamingText ? (
-                    <span>{streamingText}<span className="inline-block w-0.5 h-4 bg-foreground ml-0.5 animate-pulse align-middle" /></span>
-                  ) : (
-                    <div className="flex items-center gap-1.5 h-6 pt-1">
-                      {[0, 1, 2].map((i) => (
-                        <div key={i} className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
-                      ))}
-                    </div>
-                  )}
+                <div className="flex-1 text-[14px] text-foreground leading-[1.65] pt-1">
+                  {streamingText
+                    ? <span>{streamingText}<span className="inline-block w-0.5 h-4 bg-foreground ml-0.5 animate-pulse align-middle" /></span>
+                    : <div className="flex gap-1.5 pt-1">{[0,1,2].map(i => <div key={i} className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: `${i*0.15}s` }} />)}</div>
+                  }
                 </div>
               </div>
             )}
@@ -258,47 +249,73 @@ export default function ChatPage() {
         )}
       </div>
 
-      {/* Voice indicator */}
+      {/* Voice listening indicator */}
       {isVoiceActive && (
-        <div className="flex items-center justify-center gap-3 py-3 bg-background/80 border-t border-border backdrop-blur-sm">
-          <div className="flex items-end gap-1 h-6">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div
-                key={i}
-                className="waveform-bar w-1 bg-primary rounded-full"
-                style={{ height: `${[60, 100, 40, 80, 50][i - 1]}%`, animationDelay: `${i * 0.12}s` }}
-              />
+        <div className="mx-4 mb-2 px-4 py-3 bg-primary/8 border border-primary/20 rounded-2xl flex items-center gap-3">
+          <div className="flex items-end gap-0.5 h-5 flex-shrink-0">
+            {[1,2,3,4,5].map((i) => (
+              <div key={i} className="waveform-bar w-1 bg-primary rounded-full"
+                style={{ height: `${[50,100,60,90,40][i-1]}%`, animationDelay: `${i*0.1}s` }} />
             ))}
           </div>
-          <span className="text-[13px] text-muted-foreground">Listening — say "Hey DlJiS"</span>
-          <div className="pulse-dot w-2 h-2 rounded-full bg-primary" />
+          <p className="text-[13px] text-primary font-medium flex-1 truncate">
+            {voiceTranscript || "Listening…"}
+          </p>
+          <button onClick={stopVoice} className="text-[11px] text-primary/70 font-medium">Done</button>
         </div>
       )}
 
-      {/* Input area */}
-      <div className="px-4 py-4 border-t border-border bg-background">
-        <div className="max-w-[750px] mx-auto">
-          <div className="relative bg-card border border-border rounded-2xl shadow-sm focus-within:ring-1 focus-within:ring-ring focus-within:border-ring transition-all">
+      {/* Input bar */}
+      <div className="px-3 pb-4 pt-2 bg-background">
+        <div className="max-w-[700px] mx-auto">
+          <div className="bg-card border border-border rounded-3xl shadow-sm focus-within:ring-1 focus-within:ring-ring transition-all overflow-hidden">
+            {/* Text area */}
             <textarea
               ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
+              value={input + (voiceTranscript ? " " + voiceTranscript : "")}
+              onChange={(e) => {
+                const val = e.target.value;
+                setInput(val);
+                setVoiceTranscript("");
+              }}
               onKeyDown={handleKeyDown}
-              placeholder="Message DlJiS..."
+              placeholder="Message DlJiS…"
               rows={1}
-              className="w-full resize-none bg-transparent text-[14px] text-foreground placeholder:text-muted-foreground px-4 pt-3.5 pb-12 focus:outline-none leading-relaxed max-h-40 overflow-y-auto"
-              style={{ minHeight: "52px" }}
+              readOnly={isVoiceActive}
+              className="w-full resize-none bg-transparent text-[14px] text-foreground placeholder:text-muted-foreground px-4 pt-3.5 pb-2 focus:outline-none leading-relaxed"
+              style={{ minHeight: "48px", maxHeight: "120px", overflowY: "auto" }}
               data-testid="input-message"
             />
 
-            {/* Bottom toolbar inside input */}
-            <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                {/* Model picker */}
-                <div className="relative" ref={modelPickerRef}>
+            {/* Toolbar row */}
+            <div className="flex items-center justify-between px-3 pb-2.5">
+              {/* Left: + and model pill */}
+              <div className="flex items-center gap-2">
+                {/* + button */}
+                <div className="relative">
+                  <button
+                    onClick={() => setAddMenuOpen((v) => !v)}
+                    className="w-8 h-8 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                    data-testid="button-add"
+                  >
+                    <Plus size={16} />
+                  </button>
+                  {addMenuOpen && (
+                    <div className="absolute bottom-full mb-2 left-0 bg-popover border border-border rounded-2xl shadow-lg p-3 w-52 z-50"
+                      onMouseLeave={() => setAddMenuOpen(false)}>
+                      <p className="text-[11.5px] font-semibold text-muted-foreground mb-2 px-1">Add to chat</p>
+                      {["Camera", "Photos", "Files"].map((item) => (
+                        <button key={item} className="w-full text-left px-3 py-2 text-[13px] text-foreground hover:bg-accent rounded-xl transition-colors">{item}</button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Model pill */}
+                <div className="relative">
                   <button
                     onClick={() => setModelPickerOpen((v) => !v)}
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 bg-muted hover:bg-accent rounded-lg text-[12px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+                    className="flex items-center gap-1.5 h-8 px-3 bg-muted hover:bg-accent rounded-full text-[13px] font-medium text-muted-foreground hover:text-foreground transition-colors"
                     data-testid="button-model-picker"
                   >
                     <span className={selectedModel.color}>{selectedModel.label}</span>
@@ -306,66 +323,60 @@ export default function ChatPage() {
                   </button>
 
                   {modelPickerOpen && (
-                    <div className="absolute bottom-full mb-2 left-0 w-52 bg-popover border border-popover-border rounded-xl shadow-lg overflow-hidden z-50">
-                      <div className="px-3 py-2 border-b border-border">
-                        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Select model</p>
+                    <div className="absolute bottom-full mb-2 left-0 bg-popover border border-border rounded-2xl shadow-xl overflow-hidden z-50 w-56">
+                      <div className="px-4 py-3 border-b border-border">
+                        <p className="text-[13px] font-semibold text-foreground">Select model</p>
                       </div>
-                      {MODELS.map((model) => (
-                        <button
-                          key={model.id}
-                          onClick={() => { setSelectedModel(model); setModelPickerOpen(false); }}
-                          className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-accent transition-colors text-left"
-                          data-testid={`model-option-${model.id}`}
+                      {MODELS.map((m) => (
+                        <button key={m.id}
+                          onClick={() => { setSelectedModel(m); setModelPickerOpen(false); }}
+                          className="w-full flex items-center justify-between px-4 py-3 hover:bg-accent transition-colors"
+                          data-testid={`model-${m.id}`}
                         >
-                          <div>
-                            <p className={cn("text-[13px] font-medium", model.color)}>{model.label}</p>
-                            <p className="text-[11px] text-muted-foreground">{model.provider}</p>
+                          <div className="text-left">
+                            <p className={cn("text-[14px] font-medium", m.color)}>{m.label}</p>
+                            <p className="text-[11.5px] text-muted-foreground">{m.desc}</p>
                           </div>
-                          {selectedModel.id === model.id && <Check size={13} className="text-primary flex-shrink-0" />}
+                          {selectedModel.id === m.id && <Check size={15} className="text-primary flex-shrink-0" />}
                         </button>
                       ))}
                     </div>
                   )}
                 </div>
-
-                <button
-                  className="p-1.5 text-muted-foreground hover:text-foreground rounded-lg hover:bg-accent transition-colors"
-                  data-testid="button-attach"
-                >
-                  <Paperclip size={15} />
-                </button>
               </div>
 
-              <div className="flex items-center gap-1.5">
+              {/* Right: mic + send */}
+              <div className="flex items-center gap-2">
                 <button
-                  onClick={() => setIsVoiceActive((v) => !v)}
+                  onClick={toggleVoice}
                   className={cn(
-                    "p-1.5 rounded-lg transition-colors",
-                    isVoiceActive ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                    "w-8 h-8 rounded-full flex items-center justify-center transition-all",
+                    isVoiceActive
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-accent"
                   )}
                   data-testid="button-voice"
                 >
-                  {isVoiceActive ? <MicOff size={15} /> : <Mic size={15} />}
+                  {isVoiceActive ? <MicOff size={16} /> : <Mic size={16} />}
                 </button>
+
+                {/* Send / waveform button */}
                 <button
                   onClick={handleSend}
-                  disabled={!input.trim() || isSending}
+                  disabled={!(input.trim() || voiceTranscript.trim()) || isSending}
                   className={cn(
-                    "p-1.5 rounded-xl transition-all",
-                    input.trim() && !isSending
-                      ? "bg-foreground text-background hover:opacity-80"
-                      : "text-muted-foreground opacity-40 cursor-not-allowed"
+                    "w-9 h-9 rounded-full flex items-center justify-center transition-all",
+                    (input.trim() || voiceTranscript.trim()) && !isSending
+                      ? "bg-foreground text-background"
+                      : "bg-muted text-muted-foreground cursor-not-allowed"
                   )}
                   data-testid="button-send"
                 >
-                  <Send size={14} />
+                  {isSending ? <AudioLines size={16} className="animate-pulse" /> : <Send size={15} />}
                 </button>
               </div>
             </div>
           </div>
-          <p className="text-[11px] text-muted-foreground text-center mt-2">
-            DlJiS requires your approval before executing any action.
-          </p>
         </div>
       </div>
     </div>
@@ -374,25 +385,24 @@ export default function ChatPage() {
 
 function EmptyState({ onChipClick }: { onChipClick: (chip: string) => void }) {
   return (
-    <div className="flex flex-col items-center justify-center h-full px-4 py-16">
-      <div className="mb-6">
-        <svg width="44" height="44" viewBox="0 0 24 24" fill="none">
+    <div className="flex flex-col items-center justify-center h-full px-4 py-12">
+      <div className="mb-5">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
           <path d="M12 2L13.8 8.2L20 10L13.8 11.8L12 18L10.2 11.8L4 10L10.2 8.2L12 2Z" fill="hsl(14, 65%, 58%)" />
           <path d="M19 15L19.9 17.1L22 18L19.9 18.9L19 21L18.1 18.9L16 18L18.1 17.1L19 15Z" fill="hsl(14, 65%, 58%)" opacity="0.6" />
         </svg>
       </div>
-      <h1 className="text-[22px] font-semibold text-foreground mb-2 tracking-tight">What would you like to do?</h1>
-      <p className="text-[14px] text-muted-foreground mb-8 text-center max-w-sm leading-relaxed">
-        Control your digital life through conversation. Say it, confirm it, done.
+      <h1 className="text-[22px] font-semibold text-foreground mb-1.5 tracking-tight text-center">
+        HusaynZul returns!
+      </h1>
+      <p className="text-[13.5px] text-muted-foreground mb-8 text-center max-w-xs leading-relaxed">
+        Control your digital life — social, trading, ads, food — through conversation.
       </p>
-      <div className="flex flex-wrap gap-2 justify-center max-w-md">
+      <div className="flex flex-wrap gap-2 justify-center max-w-xs">
         {SUGGESTION_CHIPS.map((chip) => (
-          <button
-            key={chip}
-            onClick={() => onChipClick(chip)}
-            className="px-3.5 py-2 bg-card border border-border rounded-xl text-[13px] text-foreground hover:bg-accent hover:border-accent-border transition-all"
-            data-testid={`chip-${chip.toLowerCase().replace(/\s/g, "-")}`}
-          >
+          <button key={chip} onClick={() => onChipClick(chip)}
+            className="px-4 py-2 bg-card border border-border rounded-2xl text-[13px] text-foreground hover:bg-accent transition-all"
+            data-testid={`chip-${chip}`}>
             {chip}
           </button>
         ))}
@@ -404,19 +414,17 @@ function EmptyState({ onChipClick }: { onChipClick: (chip: string) => void }) {
 function MessageBubble({ message }: { message: MessageItem }) {
   const isUser = message.role === "user";
   return (
-    <div className={cn("flex", isUser ? "justify-end" : "justify-start")} data-testid={`message-${message.id}`}>
+    <div className={cn("flex mt-3", isUser ? "justify-end" : "justify-start")} data-testid={`message-${message.id}`}>
       {!isUser && (
-        <div className="flex-shrink-0 mr-3 mt-1">
-          <div className="w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center">
-            <Sparkles size={13} className="text-primary" />
-          </div>
+        <div className="w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0 mr-2.5 mt-0.5">
+          <Sparkles size={13} className="text-primary" />
         </div>
       )}
       <div className={cn(
-        "max-w-[85%] rounded-2xl px-4 py-2.5 text-[14px] leading-[1.65] whitespace-pre-wrap",
+        "max-w-[82%] px-4 py-2.5 text-[14px] leading-[1.65] whitespace-pre-wrap",
         isUser
-          ? "bg-foreground text-background rounded-br-sm"
-          : "text-foreground rounded-bl-sm"
+          ? "bg-foreground text-background rounded-[20px] rounded-br-md"
+          : "text-foreground rounded-[20px] rounded-bl-md"
       )}>
         {message.content}
       </div>
