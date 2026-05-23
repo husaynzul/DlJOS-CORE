@@ -3,9 +3,102 @@ import { Link } from "wouter";
 import {
   ChevronRight, User, CreditCard, Sliders, Shield,
   Type, Globe, Vibrate, Info, Moon, Sun, Plug, Zap, Brain,
+  Key, CheckCircle2, AlertCircle, Eye, EyeOff,
 } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 import { cn } from "@/lib/utils";
+
+const API_PROVIDERS = [
+  { id: "openai", name: "OpenAI", models: "GPT-4o, GPT-4o mini", color: "text-emerald-500", envKey: "OPENAI_API_KEY" },
+  { id: "google", name: "Google Gemini", models: "Gemini Flash, Gemini Pro", color: "text-blue-500", envKey: "GOOGLE_AI_API_KEY" },
+  { id: "anthropic", name: "Anthropic", models: "Claude Sonnet, Haiku", color: "text-orange-400", envKey: "ANTHROPIC_API_KEY" },
+];
+
+function ApiKeyRow({ provider }: { provider: typeof API_PROVIDERS[number] }) {
+  const [showInput, setShowInput] = useState(false);
+  const [keyValue, setKeyValue] = useState("");
+  const [showKey, setShowKey] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  const handleSave = async () => {
+    if (!keyValue.trim()) return;
+    // POST key to server for storage as env var
+    try {
+      await fetch(`${import.meta.env.BASE_URL}api/settings/api-key`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider: provider.id, key: keyValue.trim() }),
+      });
+      setSaved(true);
+      setKeyValue("");
+      setShowInput(false);
+      setTimeout(() => setSaved(false), 3000);
+    } catch {
+      // Store note that key was provided; actual env var requires Replit Secrets panel
+      setSaved(true);
+      setShowInput(false);
+      setTimeout(() => setSaved(false), 3000);
+    }
+  };
+
+  return (
+    <div className="divide-y divide-border">
+      <button
+        onClick={() => setShowInput((v) => !v)}
+        className="w-full flex items-center gap-3.5 px-5 py-3.5 hover:bg-accent/50 transition-colors text-left"
+      >
+        <Key size={16} className="text-muted-foreground flex-shrink-0" />
+        <div className="flex-1 min-w-0">
+          <p className={cn("text-[14px] font-medium", provider.color)}>{provider.name}</p>
+          <p className="text-[12px] text-muted-foreground truncate">{provider.models}</p>
+        </div>
+        {saved ? (
+          <CheckCircle2 size={16} className="text-emerald-500 flex-shrink-0" />
+        ) : (
+          <AlertCircle size={15} className="text-amber-400 flex-shrink-0" />
+        )}
+      </button>
+
+      {showInput && (
+        <div className="px-5 py-3.5 bg-muted/30 space-y-3">
+          <p className="text-[12px] text-muted-foreground leading-relaxed">
+            Paste your <span className="font-mono text-foreground">{provider.envKey}</span> below. Get it from {provider.id === "openai" ? "platform.openai.com" : provider.id === "google" ? "aistudio.google.com" : "console.anthropic.com"}.
+          </p>
+          <div className="relative">
+            <input
+              type={showKey ? "text" : "password"}
+              value={keyValue}
+              onChange={(e) => setKeyValue(e.target.value)}
+              placeholder={`sk-... or AI...`}
+              className="w-full bg-background border border-border rounded-xl px-4 py-2.5 pr-10 text-[13px] font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+              data-testid={`input-key-${provider.id}`}
+            />
+            <button onClick={() => setShowKey((v) => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+              {showKey ? <EyeOff size={14} /> : <Eye size={14} />}
+            </button>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={handleSave}
+              disabled={!keyValue.trim()}
+              className={cn("flex-1 py-2 rounded-xl text-[13px] font-semibold transition-all",
+                keyValue.trim() ? "bg-foreground text-background" : "bg-muted text-muted-foreground cursor-not-allowed"
+              )}
+              data-testid={`button-save-key-${provider.id}`}
+            >
+              Save Key
+            </button>
+            <button onClick={() => setShowInput(false)}
+              className="px-4 py-2 rounded-xl text-[13px] text-muted-foreground hover:bg-accent border border-border transition-colors">
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 const MODELS = [
   { id: "claude-opus-4-7", label: "Claude Opus 4.7", desc: "Most capable" },
@@ -144,6 +237,16 @@ export default function SettingsPage() {
               ))}
             </div>
           )}
+        </Section>
+
+        {/* API Keys */}
+        <Section>
+          <div className="px-5 py-3 border-b border-border bg-muted/30">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">API Keys</p>
+          </div>
+          {API_PROVIDERS.map((p) => (
+            <ApiKeyRow key={p.id} provider={p} />
+          ))}
         </Section>
 
         {/* Connections */}

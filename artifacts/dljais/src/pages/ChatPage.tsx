@@ -19,9 +19,15 @@ const SUGGESTION_CHIPS = [
 ];
 
 const MODELS = [
-  { id: "claude-opus-4-7", label: "Opus", desc: "Most capable", color: "text-orange-500" },
-  { id: "claude-sonnet-4-6", label: "Sonnet", desc: "Recommended", color: "text-orange-400" },
-  { id: "claude-haiku-4-5", label: "Haiku", desc: "Fastest", color: "text-orange-300" },
+  // OpenAI
+  { id: "gpt-4o",        label: "GPT-4o",       desc: "OpenAI · Best",     color: "text-emerald-500", group: "OpenAI" },
+  { id: "gpt-4o-mini",   label: "GPT-4o mini",  desc: "OpenAI · Fast",     color: "text-emerald-400", group: "OpenAI" },
+  // Google Gemini
+  { id: "gemini-2.0-flash-exp", label: "Gemini Flash", desc: "Google · Fastest", color: "text-blue-400", group: "Google" },
+  { id: "gemini-1.5-pro",       label: "Gemini Pro",   desc: "Google · Smart",   color: "text-blue-500", group: "Google" },
+  // Anthropic Claude
+  { id: "claude-sonnet-4-6", label: "Claude Sonnet", desc: "Anthropic",     color: "text-orange-400", group: "Anthropic" },
+  { id: "claude-haiku-4-5",  label: "Claude Haiku",  desc: "Anthropic · Fast", color: "text-orange-300", group: "Anthropic" },
 ];
 
 interface MessageItem {
@@ -54,7 +60,7 @@ export default function ChatPage() {
   const { toast } = useToast();
 
   const [input, setInput] = useState("");
-  const [selectedModel, setSelectedModel] = useState(MODELS[1]);
+  const [selectedModel, setSelectedModel] = useState(MODELS[0]);
   const [modelPickerOpen, setModelPickerOpen] = useState(false);
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const [isVoiceActive, setIsVoiceActive] = useState(false);
@@ -323,23 +329,34 @@ export default function ChatPage() {
                   </button>
 
                   {modelPickerOpen && (
-                    <div className="absolute bottom-full mb-2 left-0 bg-popover border border-border rounded-2xl shadow-xl overflow-hidden z-50 w-56">
+                    <div className="absolute bottom-full mb-2 left-0 bg-popover border border-border rounded-2xl shadow-xl overflow-hidden z-50 w-60">
                       <div className="px-4 py-3 border-b border-border">
                         <p className="text-[13px] font-semibold text-foreground">Select model</p>
                       </div>
-                      {MODELS.map((m) => (
-                        <button key={m.id}
-                          onClick={() => { setSelectedModel(m); setModelPickerOpen(false); }}
-                          className="w-full flex items-center justify-between px-4 py-3 hover:bg-accent transition-colors"
-                          data-testid={`model-${m.id}`}
-                        >
-                          <div className="text-left">
-                            <p className={cn("text-[14px] font-medium", m.color)}>{m.label}</p>
-                            <p className="text-[11.5px] text-muted-foreground">{m.desc}</p>
+                      {(["OpenAI", "Google", "Anthropic"] as const).map((group) => {
+                        const groupModels = MODELS.filter((m) => m.group === group);
+                        return (
+                          <div key={group}>
+                            <p className="text-[10.5px] font-semibold uppercase tracking-wider text-muted-foreground px-4 pt-2.5 pb-1">{group}</p>
+                            {groupModels.map((m) => (
+                              <button key={m.id}
+                                onClick={() => { setSelectedModel(m); setModelPickerOpen(false); }}
+                                className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-accent transition-colors text-left"
+                                data-testid={`model-${m.id}`}
+                              >
+                                <div>
+                                  <p className={cn("text-[13px] font-medium", m.color)}>{m.label}</p>
+                                  <p className="text-[11px] text-muted-foreground">{m.desc}</p>
+                                </div>
+                                {selectedModel.id === m.id && <Check size={13} className="text-primary flex-shrink-0" />}
+                              </button>
+                            ))}
                           </div>
-                          {selectedModel.id === m.id && <Check size={15} className="text-primary flex-shrink-0" />}
-                        </button>
-                      ))}
+                        );
+                      })}
+                      <div className="px-4 py-2.5 border-t border-border">
+                        <p className="text-[11px] text-muted-foreground">Add API keys in <span className="text-primary">Settings → API Keys</span></p>
+                      </div>
                     </div>
                   )}
                 </div>

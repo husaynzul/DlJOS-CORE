@@ -60,6 +60,8 @@ export function ActionCard({
   details,
   onUpdate,
 }: ActionCardProps) {
+  // Guard against invalid id to prevent PATCH /api/actions/undefined
+  if (!id || isNaN(id)) return null;
   const [isEditing, setIsEditing] = useState(false);
   const [editedDetails, setEditedDetails] = useState(details);
   const queryClient = useQueryClient();
