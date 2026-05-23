@@ -1,22 +1,30 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: DLJAIS AI Action OS API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: conversations
+    description: Chat conversation management
+  - name: messages
+    description: Chat messages
+  - name: actions
+    description: Action cards and execution pipeline
+  - name: platforms
+    description: Connected platform management
+  - name: stats
+    description: Analytics and dashboard summary
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +32,451 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /conversations:
+    get:
+      operationId: listConversations
+      tags: [conversations]
+      summary: List all conversations
+      responses:
+        "200":
+          description: List of conversations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Conversation"
+    post:
+      operationId: createConversation
+      tags: [conversations]
+      summary: Create a new conversation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConversationInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Conversation"
+
+  /conversations/{id}:
+    get:
+      operationId: getConversation
+      tags: [conversations]
+      summary: Get a conversation with its messages
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Conversation with messages
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConversationDetail"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteConversation
+      tags: [conversations]
+      summary: Delete a conversation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /conversations/{id}/messages:
+    post:
+      operationId: sendMessage
+      tags: [messages]
+      summary: Send a message and get AI response
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MessageInput"
+      responses:
+        "201":
+          description: Message sent with AI response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessagePair"
+
+  /actions:
+    get:
+      operationId: listActions
+      tags: [actions]
+      summary: List action cards
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [pending, approved, rejected, executing, completed, failed]
+      responses:
+        "200":
+          description: List of actions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActionCard"
+    post:
+      operationId: createAction
+      tags: [actions]
+      summary: Create a new action card
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActionInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActionCard"
+
+  /actions/{id}:
+    get:
+      operationId: getAction
+      tags: [actions]
+      summary: Get an action card
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Action card
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActionCard"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateActionStatus
+      tags: [actions]
+      summary: Approve, reject, or modify an action
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActionStatusUpdate"
+      responses:
+        "200":
+          description: Updated action
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActionCard"
+
+  /platforms:
+    get:
+      operationId: listPlatforms
+      tags: [platforms]
+      summary: List all connected platforms
+      responses:
+        "200":
+          description: Platform list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Platform"
+
+  /platforms/{id}:
+    patch:
+      operationId: updatePlatform
+      tags: [platforms]
+      summary: Update platform connection status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlatformUpdate"
+      responses:
+        "200":
+          description: Updated platform
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Platform"
+
+  /stats/summary:
+    get:
+      operationId: getStatsSummary
+      tags: [stats]
+      summary: Get dashboard stats summary
+      responses:
+        "200":
+          description: Stats summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatsSummary"
+
+  /actions/pending-count:
+    get:
+      operationId: getPendingActionCount
+      tags: [actions]
+      summary: Get count of pending actions
+      responses:
+        "200":
+          description: Pending count
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PendingCount"
+
 components:
   schemas:
     HealthStatus:
       type: object
+      required: [status]
       properties:
         status:
           type: string
-      required:
-        - status
 
+    Conversation:
+      type: object
+      required: [id, title, createdAt, updatedAt, messageCount]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+        messageCount:
+          type: integer
+        lastMessage:
+          type: ["string", "null"]
+
+    ConversationInput:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+
+    ConversationDetail:
+      type: object
+      required: [id, title, createdAt, updatedAt, messages]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/Message"
+
+    Message:
+      type: object
+      required: [id, conversationId, role, content, createdAt]
+      properties:
+        id:
+          type: integer
+        conversationId:
+          type: integer
+        role:
+          type: string
+          enum: [user, assistant]
+        content:
+          type: string
+        intent:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        actionCardId:
+          type: ["integer", "null"]
+
+    MessageInput:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+
+    MessagePair:
+      type: object
+      required: [userMessage, aiMessage]
+      properties:
+        userMessage:
+          $ref: "#/components/schemas/Message"
+        aiMessage:
+          $ref: "#/components/schemas/Message"
+        actionCard:
+          $ref: "#/components/schemas/ActionCard"
+
+    ActionCard:
+      type: object
+      required: [id, title, platform, intent, status, riskLevel, createdAt]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        platform:
+          type: string
+        intent:
+          type: string
+        status:
+          type: string
+          enum: [pending, approved, rejected, executing, completed, failed]
+        riskLevel:
+          type: string
+          enum: [low, medium, high]
+        estimatedCost:
+          type: ["string", "null"]
+        details:
+          type: string
+        preview:
+          type: ["string", "null"]
+        conversationId:
+          type: ["integer", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    ActionInput:
+      type: object
+      required: [title, platform, intent, riskLevel, details]
+      properties:
+        title:
+          type: string
+        platform:
+          type: string
+        intent:
+          type: string
+        riskLevel:
+          type: string
+          enum: [low, medium, high]
+        estimatedCost:
+          type: string
+        details:
+          type: string
+        preview:
+          type: string
+        conversationId:
+          type: integer
+
+    ActionStatusUpdate:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [approved, rejected, executing, completed, failed]
+        modifiedDetails:
+          type: string
+
+    Platform:
+      type: object
+      required: [id, name, category, status, icon]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        category:
+          type: string
+          enum: [social, ads, ecommerce, trading, food, website]
+        status:
+          type: string
+          enum: [connected, disconnected, limited]
+        icon:
+          type: string
+        accountName:
+          type: ["string", "null"]
+        lastSync:
+          type: ["string", "null"]
+
+    PlatformUpdate:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [connected, disconnected, limited]
+        accountName:
+          type: string
+
+    StatsSummary:
+      type: object
+      required: [totalActions, pendingActions, completedActions, connectedPlatforms, actionsThisWeek]
+      properties:
+        totalActions:
+          type: integer
+        pendingActions:
+          type: integer
+        completedActions:
+          type: integer
+        connectedPlatforms:
+          type: integer
+        actionsThisWeek:
+          type: integer
+        recentActivity:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActionCard"
+
+    PendingCount:
+      type: object
+      required: [count]
+      properties:
+        count:
+          type: integer
