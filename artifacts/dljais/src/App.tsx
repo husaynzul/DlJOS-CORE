@@ -1,9 +1,11 @@
+import { useState, useCallback } from "react";
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { AppLayout } from "@/components/AppLayout";
+import { SplashScreen } from "@/components/SplashScreen";
 import ChatPage from "@/pages/ChatPage";
 import HistoryPage from "@/pages/HistoryPage";
 import PlatformsPage from "@/pages/PlatformsPage";
@@ -34,10 +36,14 @@ function Router() {
 }
 
 export default function App() {
+  const [splashDone, setSplashDone] = useState(false);
+  const handleSplashDone = useCallback(() => setSplashDone(true), []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <ThemeProvider>
+          {!splashDone && <SplashScreen onDone={handleSplashDone} />}
           <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
             <Router />
           </WouterRouter>
