@@ -72,7 +72,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           {!collapsed && (
             <Link href="/" className="flex items-center gap-2.5 group">
               <DljaLogo />
-              <span className="font-semibold text-[15px] text-foreground tracking-tight">DLJAIS</span>
+              <span className="font-semibold text-[15px] text-foreground tracking-tight">DlJiS</span>
             </Link>
           )}
           {collapsed && (

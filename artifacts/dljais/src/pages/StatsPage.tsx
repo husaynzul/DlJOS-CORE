@@ -71,7 +71,7 @@ export default function StatsPage() {
       <div className="max-w-[700px] mx-auto w-full px-6 py-8">
         <div className="mb-6">
           <h1 className="text-[22px] font-semibold text-foreground tracking-tight">Analytics</h1>
-          <p className="text-[13.5px] text-muted-foreground mt-1">Overview of your DLJAIS activity.</p>
+          <p className="text-[13.5px] text-muted-foreground mt-1">Overview of your DlJiS activity.</p>
         </div>
 
         {/* Stats grid */}

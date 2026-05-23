@@ -256,7 +256,7 @@ export default function ChatPage() {
               />
             ))}
           </div>
-          <span className="text-[13px] text-muted-foreground">Listening — say "Hey DLJAIS"</span>
+          <span className="text-[13px] text-muted-foreground">Listening — say "Hey DlJiS"</span>
           <div className="pulse-dot w-2 h-2 rounded-full bg-primary" />
         </div>
       )}
@@ -270,7 +270,7 @@ export default function ChatPage() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Message DLJAIS..."
+              placeholder="Message DlJiS..."
               rows={1}
               className="w-full resize-none bg-transparent text-[14px] text-foreground placeholder:text-muted-foreground px-4 pt-3.5 pb-3 pr-24 focus:outline-none leading-relaxed max-h-40 overflow-y-auto"
               style={{ minHeight: "52px" }}
@@ -311,7 +311,7 @@ export default function ChatPage() {
             </div>
           </div>
           <p className="text-[11px] text-muted-foreground text-center mt-2">
-            DLJAIS requires your approval before executing any action.
+            DlJiS requires your approval before executing any action.
           </p>
         </div>
       </div>

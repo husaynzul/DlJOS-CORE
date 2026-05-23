@@ -53,7 +53,7 @@ export default function PlatformsPage() {
         <div className="mb-6">
           <h1 className="text-[22px] font-semibold text-foreground tracking-tight">Connected Platforms</h1>
           <p className="text-[13.5px] text-muted-foreground mt-1">
-            Manage the platforms DLJAIS can act on your behalf.
+            Manage the platforms DlJiS can act on your behalf.
           </p>
         </div>
 

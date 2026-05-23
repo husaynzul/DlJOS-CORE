@@ -59,7 +59,7 @@ export default function ActionsPage() {
           <div className="text-center py-20 text-muted-foreground">
             <Zap size={32} className="mx-auto mb-3 opacity-30" />
             <p className="text-[14px]">No actions yet</p>
-            <p className="text-[13px] mt-1">Actions appear here when DLJAIS prepares something for your approval.</p>
+            <p className="text-[13px] mt-1">Actions appear here when DlJiS prepares something for your approval.</p>
           </div>
         ) : (
           <div className="space-y-2">
