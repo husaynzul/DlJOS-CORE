@@ -15,12 +15,13 @@ import { DlJOSLogo } from "@/components/AppLayout";
 const CHIPS = ["Post to Instagram", "Trade signals", "Run Google Ads", "Order food"];
 
 const MODELS = [
-  { id: "auto",                label: "Auto",         desc: "Best for your task",   color: "text-foreground",  group: "DlJOS AI" },
-  { id: "gpt-4o",              label: "GPT-4o",        desc: "OpenAI · Best",        color: "text-emerald-500", group: "DlJOS AI" },
-  { id: "gpt-4o-mini",         label: "GPT-4o mini",   desc: "OpenAI · Fast",        color: "text-emerald-400", group: "DlJOS AI" },
-  { id: "gemini-2.0-flash-exp",label: "Gemini Flash",  desc: "Google · Fastest",     color: "text-blue-400",    group: "DlJOS AI" },
-  { id: "gemini-1.5-pro",      label: "Gemini Pro",    desc: "Google · Smart",       color: "text-blue-500",    group: "DlJOS AI" },
-  { id: "claude-sonnet-4-6",   label: "Claude Sonnet", desc: "Anthropic",            color: "text-orange-400",  group: "DlJOS AI" },
+  { id: "auto",              label: "Auto",            desc: "Best for your task",    color: "text-foreground",  group: "DlJOS AI" },
+  { id: "gemini-2.5-flash",  label: "Gemini 2.5 Flash",desc: "Google · Fastest & free", color: "text-blue-400", group: "DlJOS AI" },
+  { id: "gemini-2.0-flash",  label: "Gemini 2.0 Flash",desc: "Google · Stable",      color: "text-blue-500",    group: "DlJOS AI" },
+  { id: "gemini-2.5-pro",    label: "Gemini 2.5 Pro",  desc: "Google · Smartest",    color: "text-indigo-400",  group: "DlJOS AI" },
+  { id: "gpt-4o",            label: "GPT-4o",          desc: "OpenAI · Best",        color: "text-emerald-500", group: "DlJOS AI" },
+  { id: "gpt-4o-mini",       label: "GPT-4o mini",     desc: "OpenAI · Fast",        color: "text-emerald-400", group: "DlJOS AI" },
+  { id: "claude-sonnet-4-6", label: "Claude Sonnet",   desc: "Anthropic",            color: "text-orange-400",  group: "DlJOS AI" },
 ];
 
 const AI_MODES = [

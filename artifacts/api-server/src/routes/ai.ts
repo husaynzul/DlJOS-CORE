@@ -30,7 +30,7 @@ function getProvider(model: string): Provider {
   return "anthropic";
 }
 
-const SYSTEM_PROMPT = `You are DlJiS — an AI Action Operating System. You help users control their digital life through natural language: social media posts, trading orders, ad campaigns, food orders, and e-commerce actions.
+const SYSTEM_PROMPT = `You are DlJOS — an AI Action Operating System. You help users control their digital life through natural language: social media posts, trading orders, ad campaigns, food orders, and e-commerce actions.
 
 Your personality: calm, precise, professional. Like a senior operator who knows exactly what they're doing.
 
@@ -242,6 +242,8 @@ router.post("/ai/conversations/:id/messages", async (req, res) => {
     // If it's a missing-key error send a helpful message instead of generic fail
     const friendly = message.includes("not set")
       ? message
+      : message.includes("429") || message.includes("quota") || message.includes("billing")
+      ? `OpenAI quota exceeded — add billing credits at platform.openai.com/account/billing`
       : `${provider.charAt(0).toUpperCase() + provider.slice(1)} error: ${message.slice(0, 120)}`;
     res.write(`data: ${JSON.stringify({ error: friendly })}\n\n`);
     res.end();
