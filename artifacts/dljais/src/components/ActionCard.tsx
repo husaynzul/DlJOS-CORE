@@ -66,7 +66,7 @@ export function ActionCard({
   const [editedDetails, setEditedDetails] = useState(details);
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const updateMutation = useUpdateActionStatus(id);
+  const updateMutation = useUpdateActionStatus();
 
   const isPending = status === "pending";
 
@@ -78,7 +78,7 @@ export function ActionCard({
 
   const handleApprove = () => {
     updateMutation.mutate(
-      { data: { status: "approved" } },
+      { id, data: { status: "approved" } },
       {
         onSuccess: () => {
           toast({ title: "Action approved", description: `${title} has been approved and queued for execution.` });
@@ -91,7 +91,7 @@ export function ActionCard({
 
   const handleReject = () => {
     updateMutation.mutate(
-      { data: { status: "rejected" } },
+      { id, data: { status: "rejected" } },
       {
         onSuccess: () => {
           toast({ title: "Action rejected", description: `${title} has been cancelled.` });
@@ -104,7 +104,7 @@ export function ActionCard({
 
   const handleSaveEdit = () => {
     updateMutation.mutate(
-      { data: { status: "pending", modifiedDetails: editedDetails } },
+      { id, data: { status: "approved", modifiedDetails: editedDetails } },
       {
         onSuccess: () => {
           setIsEditing(false);

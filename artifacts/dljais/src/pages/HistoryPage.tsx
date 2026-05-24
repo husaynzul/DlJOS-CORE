@@ -41,7 +41,7 @@ export default function HistoryPage() {
       <div className="max-w-[700px] mx-auto w-full px-6 py-8">
         <div className="mb-6">
           <h1 className="text-[22px] font-semibold text-foreground tracking-tight">Conversation History</h1>
-          <p className="text-[13.5px] text-muted-foreground mt-1">All your previous sessions with DlJiS.</p>
+          <p className="text-[13.5px] text-muted-foreground mt-1">All your previous sessions with DlJOS.</p>
         </div>
 
         {isLoading ? (
