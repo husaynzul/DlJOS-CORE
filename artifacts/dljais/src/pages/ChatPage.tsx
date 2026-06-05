@@ -6,7 +6,7 @@ import {
   getListConversationsQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Send, Mic, MicOff, Plus, Sparkles, Check, AudioLines, X, ChevronDown } from "lucide-react";
+import { Send, Mic, MicOff, Plus, Sparkles, Check, AudioLines, X, ChevronDown, Key, ExternalLink } from "lucide-react";
 import { ActionCard } from "@/components/ActionCard";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -24,9 +24,15 @@ const MODELS = [
   { id: "claude-sonnet-4-6", label: "Claude Sonnet",   desc: "Anthropic",            color: "text-orange-400",  group: "DlJOS AI" },
 ];
 
+const BYOK_PROVIDERS = [
+  { id: "openai",    label: "OpenAI",           desc: "GPT-4o, GPT-4o mini",  color: "text-emerald-500", url: "platform.openai.com/api-keys" },
+  { id: "google",   label: "Google Gemini",     desc: "Gemini Flash, Pro",    color: "text-blue-500",    url: "aistudio.google.com/app/apikey" },
+  { id: "anthropic",label: "Anthropic Claude",  desc: "Sonnet, Haiku",        color: "text-orange-400",  url: "console.anthropic.com" },
+];
+
 const AI_MODES = [
-  { id: "platform", label: "DlJOS AI",  desc: "Powered by DlJOS",    badge: "Platform" },
-  { id: "byok",     label: "My API Key", desc: "Your provider, your bill", badge: "BYOK" },
+  { id: "platform", label: "DlJOS AI",   desc: "Powered by DlJOS" },
+  { id: "byok",     label: "My API Key", desc: "BYOK · $2/mo fee" },
 ];
 
 interface SpeechRecognitionEvent extends Event {
@@ -95,7 +101,6 @@ export default function ChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [localMessages, streamingText]);
 
-  // ── Voice ──
   const stopVoice = useCallback(() => {
     recRef.current?.stop(); recRef.current = null; setIsVoiceActive(false); setVoiceTranscript("");
   }, []);
@@ -121,7 +126,6 @@ export default function ChatPage() {
 
   const toggleVoice = () => isVoiceActive ? stopVoice() : startVoice();
 
-  // ── Send ──
   const handleSend = async () => {
     const text = (input + " " + voiceTranscript).trim();
     if (!text || isSending) return;
@@ -182,7 +186,6 @@ export default function ChatPage() {
   return (
     <div className="flex flex-col h-full overflow-hidden">
 
-      {/* ── Messages area (scrollable, never overlaps composer) ── */}
       <div className="flex-1 overflow-y-auto min-h-0">
         {isEmpty ? (
           <EmptyState onChipClick={(c) => { setInput(c); inputRef.current?.focus(); }} />
@@ -201,7 +204,6 @@ export default function ChatPage() {
               </div>
             ))}
 
-            {/* Streaming bubble */}
             {isSending && (
               <div className="flex items-start gap-2.5 mt-3">
                 <div className="w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -220,7 +222,6 @@ export default function ChatPage() {
         )}
       </div>
 
-      {/* ── Voice indicator (above composer, inside scroll boundary) ── */}
       {isVoiceActive && (
         <div className="mx-3 mb-2 px-4 py-2.5 bg-primary/8 border border-primary/20 rounded-2xl flex items-center gap-3 flex-shrink-0">
           <div className="flex items-end gap-0.5 h-5 flex-shrink-0">
@@ -233,12 +234,9 @@ export default function ChatPage() {
         </div>
       )}
 
-      {/* ── Composer (sticky bottom, never overlaps messages) ── */}
       <div className="flex-shrink-0 px-3 pt-2 pb-[max(12px,env(safe-area-inset-bottom))] bg-background border-t border-border">
         <div className="max-w-[700px] mx-auto">
           <div className="bg-card border border-border rounded-3xl shadow-sm focus-within:ring-1 focus-within:ring-ring transition-all overflow-hidden">
-
-            {/* Textarea */}
             <textarea
               ref={inputRef}
               value={input + (voiceTranscript ? " " + voiceTranscript : "")}
@@ -252,9 +250,7 @@ export default function ChatPage() {
               data-testid="input-message"
             />
 
-            {/* Toolbar */}
             <div className="flex items-center justify-between px-3 pb-2.5">
-              {/* Left: + and model pill */}
               <div className="flex items-center gap-2">
                 <button className="w-8 h-8 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent transition-colors" data-testid="button-add">
                   <Plus size={16} />
@@ -270,7 +266,6 @@ export default function ChatPage() {
                 </button>
               </div>
 
-              {/* Right: mic + send */}
               <div className="flex items-center gap-2">
                 <button onClick={toggleVoice}
                   className={cn("w-8 h-8 rounded-full flex items-center justify-center transition-all",
@@ -293,61 +288,92 @@ export default function ChatPage() {
         </div>
       </div>
 
-      {/* ── Model selector bottom sheet ── */}
+      {/* ── Model selector — centered popup modal ── */}
       {modelSheetOpen && (
-        <div className="fixed inset-0 z-50 flex flex-col justify-end" onClick={() => setModelSheetOpen(false)}>
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          onClick={() => setModelSheetOpen(false)}
+        >
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-[3px]" />
           <div
-            className="relative bg-background rounded-t-3xl max-h-[80dvh] overflow-y-auto animate-in slide-in-from-bottom duration-200 z-10"
+            className="relative bg-background rounded-2xl shadow-2xl w-full max-w-[360px] max-h-[80dvh] overflow-hidden flex flex-col animate-in zoom-in-95 fade-in duration-150 z-10"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Handle */}
-            <div className="flex justify-center pt-3 pb-1">
-              <div className="w-10 h-1 bg-muted rounded-full" />
-            </div>
-
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-3 border-b border-border">
+            <div className="flex items-center justify-between px-4 py-3.5 border-b border-border flex-shrink-0">
               <div>
                 <p className="text-[15px] font-semibold text-foreground">Select model</p>
-                <p className="text-[12px] text-muted-foreground">Powered by DlJOS AI</p>
+                <p className="text-[11.5px] text-muted-foreground mt-0.5">Powered by DlJOS AI</p>
               </div>
               <button onClick={() => setModelSheetOpen(false)} className="p-1.5 rounded-xl text-muted-foreground hover:bg-accent transition-colors">
-                <X size={18} />
+                <X size={17} />
               </button>
             </div>
 
-            {/* AI Mode toggle */}
-            <div className="mx-4 mt-3 mb-1 p-1 bg-muted rounded-xl flex gap-1">
-              {AI_MODES.map((m) => (
-                <button key={m.id}
-                  onClick={() => setAiMode(m.id as "platform"|"byok")}
-                  className={cn("flex-1 py-2 rounded-lg text-[13px] font-medium transition-all",
-                    aiMode === m.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"
-                  )} data-testid={`ai-mode-${m.id}`}>
-                  {m.label}
-                </button>
-              ))}
+            {/* AI Mode tabs */}
+            <div className="px-4 pt-3 pb-2 flex-shrink-0">
+              <div className="p-1 bg-muted rounded-xl flex gap-1">
+                {AI_MODES.map((m) => (
+                  <button key={m.id}
+                    onClick={() => setAiMode(m.id as "platform"|"byok")}
+                    className={cn("flex-1 py-2 rounded-lg text-[13px] font-medium transition-all",
+                      aiMode === m.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"
+                    )} data-testid={`ai-mode-${m.id}`}>
+                    {m.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            {/* Model list */}
-            <div className="px-4 pt-2 pb-6 divide-y divide-border">
-              {MODELS.map((m) => (
-                <button key={m.id}
-                  onClick={() => { setSelectedModel(m); setModelSheetOpen(false); }}
-                  className="w-full flex items-center justify-between py-3.5 hover:opacity-75 transition-opacity text-left"
-                  data-testid={`model-${m.id}`}
-                >
-                  <div>
-                    <p className={cn("text-[14px] font-medium", m.color)}>{m.label}</p>
-                    <p className="text-[12px] text-muted-foreground mt-0.5">{m.desc}</p>
-                  </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <span className="text-[10.5px] text-muted-foreground px-2 py-0.5 bg-muted rounded-full">{aiMode === "byok" ? "My API" : "DlJOS"}</span>
-                    {selectedModel.id === m.id && <Check size={15} className="text-primary" />}
-                  </div>
-                </button>
-              ))}
+            {/* Content area */}
+            <div className="overflow-y-auto flex-1">
+
+              {/* DlJOS AI → show model list only */}
+              {aiMode === "platform" && (
+                <div className="px-4 pb-4 divide-y divide-border">
+                  {MODELS.map((m) => (
+                    <button key={m.id}
+                      onClick={() => { setSelectedModel(m); setModelSheetOpen(false); }}
+                      className="w-full flex items-center justify-between py-3 hover:opacity-75 transition-opacity text-left"
+                      data-testid={`model-${m.id}`}
+                    >
+                      <div>
+                        <p className={cn("text-[14px] font-medium", m.color)}>{m.label}</p>
+                        <p className="text-[12px] text-muted-foreground mt-0.5">{m.desc}</p>
+                      </div>
+                      {selectedModel.id === m.id && <Check size={15} className="text-primary flex-shrink-0" />}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* My API Key → show provider key entries */}
+              {aiMode === "byok" && (
+                <div className="px-4 pb-4 pt-2 space-y-2">
+                  <p className="text-[12px] text-muted-foreground mb-3">Add your own API keys to use your accounts directly.</p>
+                  {BYOK_PROVIDERS.map((p) => (
+                    <div key={p.id} className="flex items-center gap-3 p-3.5 bg-muted/50 rounded-xl border border-border">
+                      <Key size={15} className="text-muted-foreground flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className={cn("text-[13.5px] font-medium", p.color)}>{p.label}</p>
+                        <p className="text-[11.5px] text-muted-foreground">{p.desc}</p>
+                      </div>
+                      <a
+                        href={`https://${p.url}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <ExternalLink size={12} />
+                      </a>
+                    </div>
+                  ))}
+                  <p className="text-[11.5px] text-muted-foreground text-center pt-2">
+                    Manage keys in <span className="text-foreground font-medium">Settings → API Keys</span>
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>

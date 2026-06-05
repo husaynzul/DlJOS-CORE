@@ -57,10 +57,17 @@ function Toggle({ icon: Icon, label, value, onToggle }: {
     <div className="flex items-center gap-3.5 px-5 py-3.5">
       <Icon size={17} className="text-muted-foreground flex-shrink-0" />
       <p className="flex-1 text-[14px] text-foreground">{label}</p>
-      <button onClick={onToggle}
-        className={cn("w-11 h-6 rounded-full transition-colors relative", value ? "bg-blue-500" : "bg-muted")}
-        data-testid={`toggle-${label.toLowerCase().replace(/\s/g,"-")}`}>
-        <span className={cn("absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform", value ? "translate-x-5" : "translate-x-0.5")} />
+      <button
+        onClick={onToggle}
+        className={cn("relative w-[44px] h-[26px] rounded-full transition-colors duration-200 overflow-hidden flex-shrink-0",
+          value ? "bg-blue-500" : "bg-muted-foreground/30"
+        )}
+        data-testid={`toggle-${label.toLowerCase().replace(/\s/g,"-")}`}
+      >
+        <span className={cn(
+          "absolute top-[3px] w-5 h-5 bg-white rounded-full shadow-md transition-transform duration-200",
+          value ? "translate-x-[21px]" : "translate-x-[3px]"
+        )} />
       </button>
     </div>
   );
@@ -201,10 +208,12 @@ export default function SettingsPage() {
           </div>
         </Section>
 
-        {/* API Keys (shown always — more prominent in BYOK mode) */}
-        <Section title="API Keys">
-          {API_PROVIDERS.map((p) => <ApiKeyRow key={p.id} p={p} />)}
-        </Section>
+        {/* API Keys — only shown when My API Key mode is selected */}
+        {aiMode === "byok" && (
+          <Section title="API Keys">
+            {API_PROVIDERS.map((p) => <ApiKeyRow key={p.id} p={p} />)}
+          </Section>
+        )}
 
         {/* AI Model */}
         <Section title="AI Brain">
