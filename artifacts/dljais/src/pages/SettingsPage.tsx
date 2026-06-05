@@ -59,14 +59,15 @@ function Toggle({ icon: Icon, label, value, onToggle }: {
       <p className="flex-1 text-[14px] text-foreground">{label}</p>
       <button
         onClick={onToggle}
-        className={cn("relative w-[44px] h-[26px] rounded-full transition-colors duration-200 overflow-hidden flex-shrink-0",
-          value ? "bg-blue-500" : "bg-muted-foreground/30"
+        className={cn("relative inline-flex items-center rounded-full transition-colors duration-200 flex-shrink-0",
+          "w-[51px] h-[31px]",
+          value ? "bg-blue-500" : "bg-zinc-300 dark:bg-zinc-600"
         )}
         data-testid={`toggle-${label.toLowerCase().replace(/\s/g,"-")}`}
       >
         <span className={cn(
-          "absolute top-[3px] w-5 h-5 bg-white rounded-full shadow-md transition-transform duration-200",
-          value ? "translate-x-[21px]" : "translate-x-[3px]"
+          "absolute w-[27px] h-[27px] bg-white rounded-full shadow-md transition-transform duration-200",
+          value ? "translate-x-[22px]" : "translate-x-[2px]"
         )} />
       </button>
     </div>
