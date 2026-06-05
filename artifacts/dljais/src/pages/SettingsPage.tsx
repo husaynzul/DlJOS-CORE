@@ -7,6 +7,7 @@ import {
 import { useTheme } from "@/components/ThemeProvider";
 import { DlJOSLogo } from "@/components/AppLayout";
 import { cn } from "@/lib/utils";
+import { useDefaultModel } from "@/hooks/use-default-model";
 
 const PLANS = [
   { id: "free",    label: "Free",    price: "$0/mo",  features: ["50 messages/day", "GPT-4o mini", "5 platforms"] },
@@ -158,9 +159,9 @@ export default function SettingsPage() {
   const [haptic, setHaptic] = useState(true);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [currentPlan] = useState("free");
+  const { defaultModel, setDefaultModel } = useDefaultModel();
   const [modelOpen, setModelOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
-  const [selectedModel, setSelectedModel] = useState("OPENAI");
   const [selectedLang, setSelectedLang] = useState("English");
   const [aiMode, setAiMode] = useState<"platform"|"byok">("platform");
 
@@ -248,19 +249,23 @@ export default function SettingsPage() {
             <Brain size={17} className="text-muted-foreground flex-shrink-0" />
             <div className="flex-1">
               <p className="text-[14px] text-foreground">Default model</p>
-              <p className="text-[12px] text-muted-foreground">{selectedModel}</p>
+              <p className="text-[12px] text-muted-foreground">{defaultModel.label}</p>
             </div>
             <ChevronRight size={15} className={cn("text-muted-foreground transition-transform", modelOpen && "rotate-90")} />
           </button>
           {modelOpen && ALL_MODELS.map((m) => (
-            <button key={m.id} onClick={() => { setSelectedModel(m.label); setModelOpen(false); }}
+            <button key={m.id} onClick={() => {
+              const modelObj = { id: m.id, label: m.label, desc: m.desc, color: m.color };
+              setDefaultModel(modelObj);
+              setModelOpen(false);
+            }}
               className="w-full flex items-center gap-3.5 px-5 py-3 hover:bg-accent/50 transition-colors border-t border-border text-left">
               <div className={cn("w-2 h-2 rounded-full flex-shrink-0", m.color.replace("text-", "bg-"))} />
               <div className="flex-1 min-w-0">
                 <p className={cn("text-[13.5px] font-medium", m.color)}>{m.label}</p>
                 <p className="text-[11.5px] text-muted-foreground">{m.desc}</p>
               </div>
-              {m.label === selectedModel && <span className="w-2 h-2 bg-primary rounded-full flex-shrink-0" />}
+              {m.label === defaultModel.label && <span className={cn("w-2 h-2 rounded-full flex-shrink-0", m.color.replace("text-", "bg-"))} />}
             </button>
           ))}
         </Section>

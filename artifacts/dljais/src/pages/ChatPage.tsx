@@ -11,6 +11,7 @@ import { ActionCard } from "@/components/ActionCard";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { DlJOSLogo } from "@/components/AppLayout";
+import { useDefaultModel } from "@/hooks/use-default-model";
 
 const CHIPS = ["Post to Instagram", "Trade signals", "Run Google Ads", "Order food"];
 
@@ -73,8 +74,9 @@ export default function ChatPage() {
   const qc = useQueryClient();
   const { toast } = useToast();
 
+  const { defaultModel, setDefaultModel } = useDefaultModel();
   const [input, setInput] = useState("");
-  const [selectedModel, setSelectedModel] = useState(MODELS[0]);
+  const [selectedModel, setSelectedModel] = useState(defaultModel);
   const [aiMode, setAiMode] = useState<"platform"|"byok">("platform");
   const [modelSheetOpen, setModelSheetOpen] = useState(false);
   const [isVoiceActive, setIsVoiceActive] = useState(false);
@@ -91,6 +93,10 @@ export default function ChatPage() {
     conversationId!,
     { query: { enabled: !!conversationId, queryKey: getGetConversationQueryKey(conversationId!) } }
   );
+
+  useEffect(() => {
+    setSelectedModel(defaultModel);
+  }, [defaultModel]);
 
   useEffect(() => {
     if (conversation?.messages) setLocalMessages(conversation.messages as MessageItem[]);
@@ -332,7 +338,7 @@ export default function ChatPage() {
                 <div className="px-4 pb-4 divide-y divide-border">
                   {MODELS.map((m) => (
                     <button key={m.id}
-                      onClick={() => { setSelectedModel(m); setModelSheetOpen(false); }}
+                      onClick={() => { setSelectedModel(m); setDefaultModel(m); setModelSheetOpen(false); }}
                       className="w-full flex items-center gap-3 py-3 hover:opacity-75 transition-opacity text-left"
                       data-testid={`model-${m.id}`}
                     >
