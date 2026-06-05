@@ -1,5 +1,7 @@
 import { useGetStatsSummary } from "@workspace/api-client-react";
+import { useEffect, useState } from "react";
 import { Zap, CheckCircle2, Clock, Plug, TrendingUp } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { cn } from "@/lib/utils";
 
 interface StatCardProps {
@@ -23,15 +25,6 @@ function StatCard({ label, value, icon: Icon, color = "text-primary" }: StatCard
   );
 }
 
-const PLATFORM_CATEGORY_LABELS: Record<string, string> = {
-  social: "Social",
-  ads: "Ads",
-  ecommerce: "Commerce",
-  trading: "Trading",
-  food: "Food",
-  website: "Web",
-};
-
 const STATUS_COLORS: Record<string, string> = {
   pending: "bg-amber-500",
   approved: "bg-emerald-500",
@@ -45,8 +38,36 @@ function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
+function formatChartDate(dateStr: string) {
+  const d = new Date(dateStr);
+  return d.toLocaleDateString([], { month: "short", day: "numeric" });
+}
+
+interface ChartPoint { date: string; count: number }
+
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-popover border border-border rounded-xl px-3 py-2 shadow-lg">
+        <p className="text-[11.5px] text-muted-foreground mb-0.5">{formatChartDate(label)}</p>
+        <p className="text-[13px] font-semibold text-foreground">{payload[0].value} actions</p>
+      </div>
+    );
+  }
+  return null;
+};
+
 export default function StatsPage() {
   const { data: stats, isLoading } = useGetStatsSummary();
+  const [chartData, setChartData] = useState<ChartPoint[]>([]);
+  const [chartLoading, setChartLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/stats/chart")
+      .then((r) => r.json())
+      .then((d) => { setChartData(d); setChartLoading(false); })
+      .catch(() => setChartLoading(false));
+  }, []);
 
   if (isLoading) {
     return (
@@ -66,6 +87,8 @@ export default function StatsPage() {
 
   if (!stats) return null;
 
+  const visibleData = chartData.filter((_, i) => i % 2 === 0 || i === chartData.length - 1);
+
   return (
     <div className="flex flex-col h-full overflow-y-auto">
       <div className="max-w-[700px] mx-auto w-full px-6 py-8">
@@ -80,6 +103,40 @@ export default function StatsPage() {
           <StatCard label="Pending Approval" value={stats.pendingActions} icon={Clock} color="text-amber-500" />
           <StatCard label="Completed" value={stats.completedActions} icon={CheckCircle2} color="text-emerald-500" />
           <StatCard label="Connected Platforms" value={stats.connectedPlatforms} icon={Plug} color="text-blue-500" />
+        </div>
+
+        {/* Chart: action history */}
+        <div className="bg-card border border-card-border rounded-2xl p-5 mb-4">
+          <div className="flex items-center gap-2 mb-4">
+            <TrendingUp size={15} className="text-primary" />
+            <p className="text-[13.5px] font-semibold text-foreground">Action History</p>
+            <span className="ml-auto text-[11.5px] text-muted-foreground">Last 30 days</span>
+          </div>
+          {chartLoading ? (
+            <div className="h-[180px] rounded-xl shimmer" />
+          ) : (
+            <ResponsiveContainer width="100%" height={180}>
+              <BarChart data={chartData} margin={{ top: 4, right: 0, left: -28, bottom: 0 }}>
+                <CartesianGrid vertical={false} stroke="hsl(var(--border))" strokeDasharray="3 3" />
+                <XAxis
+                  dataKey="date"
+                  tickFormatter={formatChartDate}
+                  tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                  axisLine={false}
+                  tickLine={false}
+                  interval={6}
+                />
+                <YAxis
+                  allowDecimals={false}
+                  tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--accent))", radius: 4 }} />
+                <Bar dataKey="count" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={24} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
         </div>
 
         {/* This week */}

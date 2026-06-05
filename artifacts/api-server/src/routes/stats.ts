@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { actionCardsTable, platformsTable } from "@workspace/db";
-import { eq, gte, desc } from "drizzle-orm";
+import { gte, desc } from "drizzle-orm";
 
 const router = Router();
 
@@ -33,6 +33,29 @@ router.get("/stats/summary", async (_req, res) => {
       updatedAt: a.updatedAt.toISOString(),
     })),
   });
+});
+
+router.get("/stats/chart", async (_req, res) => {
+  const days = 30;
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+  const actions = await db
+    .select()
+    .from(actionCardsTable)
+    .where(gte(actionCardsTable.createdAt, since));
+
+  const counts: Record<string, number> = {};
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
+    const key = d.toISOString().slice(0, 10);
+    counts[key] = 0;
+  }
+  for (const a of actions) {
+    const key = a.createdAt.toISOString().slice(0, 10);
+    if (key in counts) counts[key]++;
+  }
+
+  const data = Object.entries(counts).map(([date, count]) => ({ date, count }));
+  res.json(data);
 });
 
 export default router;

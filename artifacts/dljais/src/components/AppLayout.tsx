@@ -140,18 +140,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 </div>
               )}
 
-              {/* Platform status */}
-              <div className="mt-4 px-3">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Platforms</p>
-                <div className="space-y-1.5">
-                  {PLATFORM_DOTS.map((p) => (
-                    <div key={p.label} className="flex items-center gap-2">
-                      <Dot status={p.status} />
-                      <span className="text-[12.5px] text-muted-foreground">{p.label}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
             </nav>
 
             {/* Bottom: user row → Settings */}
