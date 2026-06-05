@@ -22,6 +22,15 @@ const API_PROVIDERS = [
 
 const LANGUAGES = ["English", "Urdu", "Arabic", "Hindi", "Spanish", "French"];
 
+const ALL_MODELS = [
+  { id: "gpt-4o",             label: "GPT-4o",          desc: "OpenAI · Best",        color: "text-emerald-500" },
+  { id: "gpt-4o-mini",        label: "GPT-4o mini",     desc: "OpenAI · Fast",        color: "text-emerald-400" },
+  { id: "gemini-flash",       label: "Gemini Flash",    desc: "Google · Fastest & free", color: "text-blue-400" },
+  { id: "gemini-pro",         label: "Gemini Pro",      desc: "Google · Smartest",    color: "text-indigo-400" },
+  { id: "claude-sonnet-4-6",  label: "Claude Sonnet 4.6", desc: "Anthropic · Smart",  color: "text-orange-400" },
+  { id: "claude-haiku-4-5",   label: "Claude Haiku 4.5",  desc: "Anthropic · Fast",   color: "text-orange-300" },
+];
+
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
@@ -195,7 +204,7 @@ export default function SettingsPage() {
             <div className="p-1 bg-muted rounded-xl flex gap-1">
               {[
                 { id: "platform", label: "DlJOS AI", sub: "Powered by DlJOS" },
-                { id: "byok",     label: "My API Key", sub: "BYOK · $2/mo fee" },
+                { id: "byok",     label: "Custom Model", sub: "Use your own API" },
               ].map((m) => (
                 <button key={m.id} onClick={() => setAiMode(m.id as "platform"|"byok")}
                   className={cn("flex-1 py-2.5 rounded-lg text-[13px] font-medium transition-all text-center",
@@ -209,14 +218,28 @@ export default function SettingsPage() {
           </div>
         </Section>
 
-        {/* API Keys — only shown when My API Key mode is selected */}
+        {/* API Keys + Custom Models — only shown when Custom Model mode is selected */}
         {aiMode === "byok" && (
-          <Section title="API Keys">
-            {API_PROVIDERS.map((p) => <ApiKeyRow key={p.id} p={p} />)}
-          </Section>
+          <>
+            <Section title="API Keys">
+              {API_PROVIDERS.map((p) => <ApiKeyRow key={p.id} p={p} />)}
+            </Section>
+
+            <Section title="Custom Models">
+              {ALL_MODELS.map((m) => (
+                <div key={m.id} className="flex items-center gap-3.5 px-5 py-3.5 border-t border-border first:border-t-0">
+                  <div className={cn("w-2 h-2 rounded-full flex-shrink-0 mt-0.5", m.color.replace("text-", "bg-"))} />
+                  <div className="flex-1">
+                    <p className={cn("text-[14px] font-medium", m.color)}>{m.label}</p>
+                    <p className="text-[12px] text-muted-foreground">{m.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </Section>
+          </>
         )}
 
-        {/* AI Model */}
+        {/* AI Brain — default model picker */}
         <Section title="AI Brain">
           <button onClick={() => setModelOpen((v) => !v)}
             className="w-full flex items-center gap-3.5 px-5 py-3.5 hover:bg-accent/50 transition-colors text-left">
@@ -227,11 +250,14 @@ export default function SettingsPage() {
             </div>
             <ChevronRight size={15} className={cn("text-muted-foreground transition-transform", modelOpen && "rotate-90")} />
           </button>
-          {modelOpen && ["GPT-4o", "GPT-4o mini", "Gemini Flash", "Gemini Pro", "Claude Sonnet 4.6", "Claude Haiku 4.5"].map((m) => (
-            <button key={m} onClick={() => { setSelectedModel(m); setModelOpen(false); }}
+          {modelOpen && ALL_MODELS.map((m) => (
+            <button key={m.id} onClick={() => { setSelectedModel(m.label); setModelOpen(false); }}
               className="w-full flex items-center justify-between px-5 py-2.5 hover:bg-accent/50 transition-colors border-t border-border">
-              <span className={cn("text-[13.5px]", m === selectedModel ? "text-primary font-medium" : "text-foreground")}>{m}</span>
-              {m === selectedModel && <span className="w-2 h-2 bg-primary rounded-full" />}
+              <div>
+                <span className={cn("text-[13.5px]", m.label === selectedModel ? "text-primary font-medium" : m.color)}>{m.label}</span>
+                <p className="text-[11.5px] text-muted-foreground">{m.desc}</p>
+              </div>
+              {m.label === selectedModel && <span className="w-2 h-2 bg-primary rounded-full flex-shrink-0" />}
             </button>
           ))}
         </Section>

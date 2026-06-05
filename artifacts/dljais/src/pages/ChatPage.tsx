@@ -6,7 +6,7 @@ import {
   getListConversationsQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Send, Mic, MicOff, Plus, Sparkles, Check, AudioLines, X, ChevronDown, Key, ExternalLink } from "lucide-react";
+import { Send, Mic, MicOff, Plus, Sparkles, Check, AudioLines, X, ChevronDown, Key, Download } from "lucide-react";
 import { ActionCard } from "@/components/ActionCard";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -31,8 +31,8 @@ const BYOK_PROVIDERS = [
 ];
 
 const AI_MODES = [
-  { id: "platform", label: "DlJOS AI",   desc: "Powered by DlJOS" },
-  { id: "byok",     label: "My API Key", desc: "BYOK · $2/mo fee" },
+  { id: "platform", label: "DlJOS AI",      desc: "Powered by DlJOS" },
+  { id: "byok",     label: "Custom Model",  desc: "Use your own API" },
 ];
 
 interface SpeechRecognitionEvent extends Event {
@@ -347,31 +347,34 @@ export default function ChatPage() {
                 </div>
               )}
 
-              {/* My API Key → show provider key entries */}
+              {/* Custom Model → Import API button */}
               {aiMode === "byok" && (
-                <div className="px-4 pb-4 pt-2 space-y-2">
-                  <p className="text-[12px] text-muted-foreground mb-3">Add your own API keys to use your accounts directly.</p>
-                  {BYOK_PROVIDERS.map((p) => (
-                    <div key={p.id} className="flex items-center gap-3 p-3.5 bg-muted/50 rounded-xl border border-border">
-                      <Key size={15} className="text-muted-foreground flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className={cn("text-[13.5px] font-medium", p.color)}>{p.label}</p>
-                        <p className="text-[11.5px] text-muted-foreground">{p.desc}</p>
+                <div className="px-4 pb-6 pt-3 flex flex-col items-center gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center">
+                    <Key size={26} className="text-muted-foreground" />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-[14px] font-semibold text-foreground">Custom Model</p>
+                    <p className="text-[12.5px] text-muted-foreground mt-1">Import your API keys to use your own models</p>
+                  </div>
+                  <button
+                    onClick={() => { setModelSheetOpen(false); setLocation("/settings?tab=custom"); }}
+                    className="flex items-center gap-2 px-5 py-3 bg-foreground text-background rounded-2xl text-[13.5px] font-semibold w-full justify-center hover:opacity-90 transition-opacity"
+                  >
+                    <Download size={15} />
+                    Import API
+                  </button>
+                  <div className="w-full space-y-1.5">
+                    {BYOK_PROVIDERS.map((p) => (
+                      <div key={p.id} className="flex items-center gap-3 px-3.5 py-2.5 bg-muted/50 rounded-xl border border-border">
+                        <div className={cn("w-2 h-2 rounded-full flex-shrink-0", p.color.replace("text-","bg-"))} />
+                        <div className="flex-1 min-w-0">
+                          <p className={cn("text-[13px] font-medium", p.color)}>{p.label}</p>
+                          <p className="text-[11px] text-muted-foreground">{p.desc}</p>
+                        </div>
                       </div>
-                      <a
-                        href={`https://${p.url}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <ExternalLink size={12} />
-                      </a>
-                    </div>
-                  ))}
-                  <p className="text-[11.5px] text-muted-foreground text-center pt-2">
-                    Manage keys in <span className="text-foreground font-medium">Settings → API Keys</span>
-                  </p>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
