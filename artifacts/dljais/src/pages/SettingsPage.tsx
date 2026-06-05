@@ -254,9 +254,10 @@ export default function SettingsPage() {
           </button>
           {modelOpen && ALL_MODELS.map((m) => (
             <button key={m.id} onClick={() => { setSelectedModel(m.label); setModelOpen(false); }}
-              className="w-full flex items-center justify-between px-5 py-2.5 hover:bg-accent/50 transition-colors border-t border-border">
-              <div>
-                <span className={cn("text-[13.5px]", m.label === selectedModel ? "text-primary font-medium" : m.color)}>{m.label}</span>
+              className="w-full flex items-center gap-3.5 px-5 py-3 hover:bg-accent/50 transition-colors border-t border-border text-left">
+              <div className={cn("w-2 h-2 rounded-full flex-shrink-0", m.color.replace("text-", "bg-"))} />
+              <div className="flex-1 min-w-0">
+                <p className={cn("text-[13.5px] font-medium", m.color)}>{m.label}</p>
                 <p className="text-[11.5px] text-muted-foreground">{m.desc}</p>
               </div>
               {m.label === selectedModel && <span className="w-2 h-2 bg-primary rounded-full flex-shrink-0" />}

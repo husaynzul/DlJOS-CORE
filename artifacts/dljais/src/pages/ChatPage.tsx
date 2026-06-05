@@ -333,10 +333,14 @@ export default function ChatPage() {
                   {MODELS.map((m) => (
                     <button key={m.id}
                       onClick={() => { setSelectedModel(m); setModelSheetOpen(false); }}
-                      className="w-full flex items-center justify-between py-3 hover:opacity-75 transition-opacity text-left"
+                      className="w-full flex items-center gap-3 py-3 hover:opacity-75 transition-opacity text-left"
                       data-testid={`model-${m.id}`}
                     >
-                      <div>
+                      {m.id !== "auto" && (
+                        <div className={cn("w-2 h-2 rounded-full flex-shrink-0", m.color.replace("text-", "bg-"))} />
+                      )}
+                      {m.id === "auto" && <div className="w-2 h-2 flex-shrink-0" />}
+                      <div className="flex-1 min-w-0">
                         <p className={cn("text-[14px] font-medium", m.color)}>{m.label}</p>
                         <p className="text-[12px] text-muted-foreground mt-0.5">{m.desc}</p>
                       </div>
