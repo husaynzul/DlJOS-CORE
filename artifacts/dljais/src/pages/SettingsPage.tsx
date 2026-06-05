@@ -14,22 +14,35 @@ const PLANS = [
   { id: "pro",     label: "Pro",     price: "$29/mo", features: ["Unlimited", "All models", "All platforms", "API access", "Custom workflows"] },
 ];
 
-const API_PROVIDERS = [
-  { id: "openai",    name: "OpenAI",          models: "GPT-4o, GPT-4o mini",   color: "text-emerald-500", envKey: "OPENAI_API_KEY",    url: "platform.openai.com/api-keys" },
-  { id: "google",    name: "Google Gemini",   models: "Gemini Flash, Pro",     color: "text-blue-500",    envKey: "GOOGLE_AI_API_KEY", url: "aistudio.google.com/app/apikey" },
-  { id: "anthropic", name: "Anthropic Claude",models: "Sonnet, Haiku",          color: "text-orange-400",  envKey: "ANTHROPIC_API_KEY", url: "console.anthropic.com" },
+const ALL_PROVIDERS = [
+  { id: "openai",     name: "OPENAI",        models: "GPT-4o, GPT-4o mini",    color: "text-emerald-500", envKey: "OPENAI_API_KEY",           url: "platform.openai.com/api-keys" },
+  { id: "anthropic",  name: "ANTHROPIC",     models: "Claude Sonnet, Haiku",    color: "text-orange-400",  envKey: "ANTHROPIC_API_KEY",        url: "console.anthropic.com" },
+  { id: "google",     name: "GOOGLE_GEMINI", models: "Gemini Flash, Pro",       color: "text-blue-400",    envKey: "GOOGLE_GEMINI_API_KEY",    url: "aistudio.google.com/app/apikey" },
+  { id: "deepseek",   name: "DEEPSEEK",      models: "DeepSeek Chat, Coder",    color: "text-purple-400",  envKey: "DEEPSEEK_API_KEY",         url: "platform.deepseek.com" },
+  { id: "grokai",     name: "GROKAI",         models: "Grok-2, Grok Vision",     color: "text-cyan-400",    envKey: "XAI_GROK_API_KEY",         url: "console.x.ai" },
+  { id: "mistral",    name: "MISTRAL",        models: "Mistral Large, Small",    color: "text-yellow-400",  envKey: "MISTRAL_API_KEY",          url: "console.mistral.ai" },
+  { id: "cohere",     name: "COHERE",         models: "Command R+, Command R",   color: "text-rose-400",    envKey: "COHERE_API_KEY",           url: "dashboard.cohere.com" },
+  { id: "elevenlabs", name: "ELEVENLABS",     models: "Text to Speech",          color: "text-violet-400",  envKey: "ELEVENLABS_API_KEY",       url: "elevenlabs.io" },
+  { id: "runway",     name: "RUNWAY",         models: "Video Generation",        color: "text-pink-400",    envKey: "RUNWAY_API_KEY",           url: "app.runwayml.com" },
+  { id: "pika",       name: "PIKA",           models: "Video Creation",          color: "text-fuchsia-400", envKey: "PIKA_API_KEY",             url: "pika.art" },
+  { id: "stable",     name: "STABLE",         models: "Stable Diffusion",        color: "text-amber-400",   envKey: "STABLE_DIFFUSION_API_KEY", url: "stability.ai" },
+];
+
+const ALL_MODELS = [
+  { id: "openai",     label: "OPENAI",        desc: "GPT-4o, GPT-4o mini",    color: "text-emerald-500" },
+  { id: "anthropic",  label: "ANTHROPIC",     desc: "Claude Sonnet, Haiku",   color: "text-orange-400" },
+  { id: "google",     label: "GOOGLE_GEMINI", desc: "Gemini Flash, Pro",      color: "text-blue-400" },
+  { id: "deepseek",   label: "DEEPSEEK",      desc: "DeepSeek Chat, Coder",   color: "text-purple-400" },
+  { id: "grokai",     label: "GROKAI",        desc: "Grok-2, Grok Vision",    color: "text-cyan-400" },
+  { id: "mistral",    label: "MISTRAL",       desc: "Mistral Large, Small",   color: "text-yellow-400" },
+  { id: "cohere",     label: "COHERE",        desc: "Command R+, Command R",  color: "text-rose-400" },
+  { id: "elevenlabs", label: "ELEVENLABS",    desc: "Text to Speech",         color: "text-violet-400" },
+  { id: "runway",     label: "RUNWAY",        desc: "Video Generation",       color: "text-pink-400" },
+  { id: "pika",       label: "PIKA",          desc: "Video Creation",         color: "text-fuchsia-400" },
+  { id: "stable",     label: "STABLE",        desc: "Stable Diffusion",       color: "text-amber-400" },
 ];
 
 const LANGUAGES = ["English", "Urdu", "Arabic", "Hindi", "Spanish", "French"];
-
-const ALL_MODELS = [
-  { id: "gpt-4o",             label: "GPT-4o",          desc: "OpenAI · Best",        color: "text-emerald-500" },
-  { id: "gpt-4o-mini",        label: "GPT-4o mini",     desc: "OpenAI · Fast",        color: "text-emerald-400" },
-  { id: "gemini-flash",       label: "Gemini Flash",    desc: "Google · Fastest & free", color: "text-blue-400" },
-  { id: "gemini-pro",         label: "Gemini Pro",      desc: "Google · Smartest",    color: "text-indigo-400" },
-  { id: "claude-sonnet-4-6",  label: "Claude Sonnet 4.6", desc: "Anthropic · Smart",  color: "text-orange-400" },
-  { id: "claude-haiku-4-5",   label: "Claude Haiku 4.5",  desc: "Anthropic · Fast",   color: "text-orange-300" },
-];
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -83,7 +96,7 @@ function Toggle({ icon: Icon, label, value, onToggle }: {
   );
 }
 
-function ApiKeyRow({ p }: { p: typeof API_PROVIDERS[number] }) {
+function CustomApiKeyRow({ p }: { p: typeof ALL_PROVIDERS[number] }) {
   const [open, setOpen] = useState(false);
   const [val, setVal] = useState("");
   const [show, setShow] = useState(false);
@@ -99,7 +112,7 @@ function ApiKeyRow({ p }: { p: typeof API_PROVIDERS[number] }) {
     <div>
       <button onClick={() => setOpen((v) => !v)}
         className="w-full flex items-center gap-3.5 px-5 py-3.5 hover:bg-accent/50 transition-colors text-left">
-        <Key size={16} className="text-muted-foreground flex-shrink-0" />
+        <div className={cn("w-2 h-2 rounded-full flex-shrink-0", p.color.replace("text-","bg-"))} />
         <div className="flex-1 min-w-0">
           <p className={cn("text-[14px] font-medium", p.color)}>{p.name}</p>
           <p className="text-[12px] text-muted-foreground">{p.models}</p>
@@ -110,10 +123,13 @@ function ApiKeyRow({ p }: { p: typeof API_PROVIDERS[number] }) {
       </button>
       {open && (
         <div className="px-5 py-3.5 bg-muted/30 space-y-3 border-t border-border">
-          <p className="text-[12px] text-muted-foreground">Get your key from <span className="text-foreground font-medium">{p.url}</span></p>
+          <p className="text-[12px] text-muted-foreground">
+            <span className="font-mono text-foreground/70 text-[11px]">{p.envKey}</span>
+            {" · "}Get your key from <span className="text-foreground font-medium">{p.url}</span>
+          </p>
           <div className="relative">
             <input type={show ? "text" : "password"} value={val} onChange={(e) => setVal(e.target.value)}
-              placeholder="sk-… or AI…"
+              placeholder="Paste your API key here…"
               className="w-full bg-background border border-border rounded-xl px-4 py-2.5 pr-10 text-[13px] font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
               data-testid={`input-key-${p.id}`} />
             <button onClick={() => setShow((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
@@ -144,7 +160,7 @@ export default function SettingsPage() {
   const [currentPlan] = useState("free");
   const [modelOpen, setModelOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
-  const [selectedModel, setSelectedModel] = useState("Claude Sonnet 4.6");
+  const [selectedModel, setSelectedModel] = useState("OPENAI");
   const [selectedLang, setSelectedLang] = useState("English");
   const [aiMode, setAiMode] = useState<"platform"|"byok">("platform");
 
@@ -218,28 +234,14 @@ export default function SettingsPage() {
           </div>
         </Section>
 
-        {/* API Keys + Custom Models — only shown when Custom Model mode is selected */}
+        {/* Custom Model — API key entry per provider */}
         {aiMode === "byok" && (
-          <>
-            <Section title="API Keys">
-              {API_PROVIDERS.map((p) => <ApiKeyRow key={p.id} p={p} />)}
-            </Section>
-
-            <Section title="Custom Models">
-              {ALL_MODELS.map((m) => (
-                <div key={m.id} className="flex items-center gap-3.5 px-5 py-3.5 border-t border-border first:border-t-0">
-                  <div className={cn("w-2 h-2 rounded-full flex-shrink-0 mt-0.5", m.color.replace("text-", "bg-"))} />
-                  <div className="flex-1">
-                    <p className={cn("text-[14px] font-medium", m.color)}>{m.label}</p>
-                    <p className="text-[12px] text-muted-foreground">{m.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </Section>
-          </>
+          <Section title="Custom Model">
+            {ALL_PROVIDERS.map((p) => <CustomApiKeyRow key={p.id} p={p} />)}
+          </Section>
         )}
 
-        {/* AI Brain — default model picker */}
+        {/* AI Brain — default model picker (same 11 models) */}
         <Section title="AI Brain">
           <button onClick={() => setModelOpen((v) => !v)}
             className="w-full flex items-center gap-3.5 px-5 py-3.5 hover:bg-accent/50 transition-colors text-left">

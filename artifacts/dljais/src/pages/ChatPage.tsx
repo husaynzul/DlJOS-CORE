@@ -15,19 +15,18 @@ import { DlJOSLogo } from "@/components/AppLayout";
 const CHIPS = ["Post to Instagram", "Trade signals", "Run Google Ads", "Order food"];
 
 const MODELS = [
-  { id: "auto",              label: "Auto",            desc: "Best for your task",    color: "text-foreground",  group: "DlJOS AI" },
-  { id: "gemini-2.5-flash",  label: "Gemini 2.5 Flash",desc: "Google · Fastest & free", color: "text-blue-400", group: "DlJOS AI" },
-  { id: "gemini-2.0-flash",  label: "Gemini 2.0 Flash",desc: "Google · Stable",      color: "text-blue-500",    group: "DlJOS AI" },
-  { id: "gemini-2.5-pro",    label: "Gemini 2.5 Pro",  desc: "Google · Smartest",    color: "text-indigo-400",  group: "DlJOS AI" },
-  { id: "gpt-4o",            label: "GPT-4o",          desc: "OpenAI · Best",        color: "text-emerald-500", group: "DlJOS AI" },
-  { id: "gpt-4o-mini",       label: "GPT-4o mini",     desc: "OpenAI · Fast",        color: "text-emerald-400", group: "DlJOS AI" },
-  { id: "claude-sonnet-4-6", label: "Claude Sonnet",   desc: "Anthropic",            color: "text-orange-400",  group: "DlJOS AI" },
-];
-
-const BYOK_PROVIDERS = [
-  { id: "openai",    label: "OpenAI",           desc: "GPT-4o, GPT-4o mini",  color: "text-emerald-500", url: "platform.openai.com/api-keys" },
-  { id: "google",   label: "Google Gemini",     desc: "Gemini Flash, Pro",    color: "text-blue-500",    url: "aistudio.google.com/app/apikey" },
-  { id: "anthropic",label: "Anthropic Claude",  desc: "Sonnet, Haiku",        color: "text-orange-400",  url: "console.anthropic.com" },
+  { id: "auto",              label: "Auto",            desc: "Best for your task",         color: "text-foreground" },
+  { id: "openai",            label: "OPENAI",           desc: "GPT-4o, GPT-4o mini",        color: "text-emerald-500" },
+  { id: "anthropic",         label: "ANTHROPIC",        desc: "Claude Sonnet, Haiku",        color: "text-orange-400" },
+  { id: "google-gemini",     label: "GOOGLE_GEMINI",    desc: "Gemini Flash, Pro",           color: "text-blue-400" },
+  { id: "deepseek",          label: "DEEPSEEK",         desc: "DeepSeek Chat, Coder",        color: "text-purple-400" },
+  { id: "grokai",            label: "GROKAI",           desc: "Grok-2, Grok Vision",         color: "text-cyan-400" },
+  { id: "mistral",           label: "MISTRAL",          desc: "Mistral Large, Small",        color: "text-yellow-400" },
+  { id: "cohere",            label: "COHERE",           desc: "Command R+, Command R",       color: "text-rose-400" },
+  { id: "elevenlabs",        label: "ELEVENLABS",       desc: "Text to Speech",              color: "text-violet-400" },
+  { id: "runway",            label: "RUNWAY",           desc: "Video Generation",            color: "text-pink-400" },
+  { id: "pika",              label: "PIKA",             desc: "Video Creation",              color: "text-fuchsia-400" },
+  { id: "stable",            label: "STABLE",           desc: "Stable Diffusion",            color: "text-amber-400" },
 ];
 
 const AI_MODES = [
@@ -328,7 +327,7 @@ export default function ChatPage() {
             {/* Content area */}
             <div className="overflow-y-auto flex-1">
 
-              {/* DlJOS AI → show model list only */}
+              {/* DlJOS AI → show all 11 AI providers */}
               {aiMode === "platform" && (
                 <div className="px-4 pb-4 divide-y divide-border">
                   {MODELS.map((m) => (
@@ -347,9 +346,9 @@ export default function ChatPage() {
                 </div>
               )}
 
-              {/* Custom Model → Import API button */}
+              {/* Custom Model → Import API button only */}
               {aiMode === "byok" && (
-                <div className="px-4 pb-6 pt-3 flex flex-col items-center gap-4">
+                <div className="px-4 pb-6 pt-5 flex flex-col items-center gap-4">
                   <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center">
                     <Key size={26} className="text-muted-foreground" />
                   </div>
@@ -364,17 +363,6 @@ export default function ChatPage() {
                     <Download size={15} />
                     Import API
                   </button>
-                  <div className="w-full space-y-1.5">
-                    {BYOK_PROVIDERS.map((p) => (
-                      <div key={p.id} className="flex items-center gap-3 px-3.5 py-2.5 bg-muted/50 rounded-xl border border-border">
-                        <div className={cn("w-2 h-2 rounded-full flex-shrink-0", p.color.replace("text-","bg-"))} />
-                        <div className="flex-1 min-w-0">
-                          <p className={cn("text-[13px] font-medium", p.color)}>{p.label}</p>
-                          <p className="text-[11px] text-muted-foreground">{p.desc}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
                 </div>
               )}
             </div>
@@ -398,16 +386,15 @@ function EmptyState({ onChipClick }: { onChipClick: (c: string) => void }) {
       <div className="mb-5">
         <DlJOSLogo size={64} className="opacity-90" />
       </div>
-      <h1 className="text-[22px] font-semibold text-foreground mb-1.5 tracking-tight text-center">HusaynZul returns!</h1>
-      <p className="text-[13.5px] text-muted-foreground mb-8 text-center max-w-xs leading-relaxed">
-        Control your digital life — social, trading, ads, food — through conversation.
+      <h2 className="text-[22px] font-bold text-foreground mb-1.5">What can I help with?</h2>
+      <p className="text-[14px] text-muted-foreground text-center mb-8 max-w-[260px]">
+        Ask me anything or pick an action below.
       </p>
-      <div className="flex flex-wrap gap-2 justify-center max-w-xs">
-        {CHIPS.map((chip) => (
-          <button key={chip} onClick={() => onChipClick(chip)}
-            className="px-4 py-2 bg-card border border-border rounded-2xl text-[13px] text-foreground hover:bg-accent transition-all"
-            data-testid={`chip-${chip}`}>
-            {chip}
+      <div className="flex flex-wrap justify-center gap-2.5 max-w-[320px]">
+        {CHIPS.map((c) => (
+          <button key={c} onClick={() => onChipClick(c)}
+            className="px-4 py-2 bg-muted hover:bg-accent border border-border rounded-full text-[13px] text-foreground font-medium transition-colors">
+            {c}
           </button>
         ))}
       </div>
@@ -418,16 +405,17 @@ function EmptyState({ onChipClick }: { onChipClick: (c: string) => void }) {
 function MessageBubble({ message }: { message: MessageItem }) {
   const isUser = message.role === "user";
   return (
-    <div className={cn("flex mt-3", isUser ? "justify-end" : "justify-start")}>
+    <div className={cn("flex items-start gap-2.5 py-2", isUser && "justify-end")}>
       {!isUser && (
-        <div className="w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0 mr-2.5 mt-0.5">
+        <div className="w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0 mt-0.5">
           <Sparkles size={13} className="text-primary" />
         </div>
       )}
       <div className={cn(
-        "max-w-[82%] px-4 py-2.5 text-[14px] leading-[1.65] whitespace-pre-wrap break-words",
-        isUser ? "bg-foreground text-background rounded-[20px] rounded-br-md"
-               : "text-foreground rounded-[20px] rounded-bl-md"
+        "max-w-[82%] text-[14px] leading-[1.65]",
+        isUser
+          ? "bg-primary text-primary-foreground px-4 py-2.5 rounded-[20px] rounded-br-[6px]"
+          : "text-foreground pt-1"
       )}>
         {message.content}
       </div>
