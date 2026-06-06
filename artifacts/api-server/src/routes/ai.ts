@@ -126,6 +126,24 @@ ACTION_CARD RULES:
 - Never fabricate platform credentials or claim to have executed anything
 - Always remind the user that no action runs without their explicit approval
 
+AD CAMPAIGN DETAILS FORMAT:
+When intent is "ads" or the action involves an ad campaign, the "details" field MUST be a JSON string (not plain text) with these keys:
+{
+  "objective": "Traffic|Awareness|Conversions|Leads|Engagement",
+  "targetAudience": "Countries or regions",
+  "dailyBudget": "$X.XX/day",
+  "age": "XX - XX",
+  "duration": "X Days",
+  "gender": "All|Male|Female",
+  "estimatedTotal": "$XXX.XX",
+  "placements": "Feed, Stories, Reels, Explore",
+  "caption": "Ad caption text with emojis",
+  "hashtags": "#Tag1 #Tag2 #Tag3",
+  "aiSummary": "2-3 sentence AI explanation of the campaign strategy",
+  "platformFee": "$2.00"
+}
+Fill in reasonable values based on the user's request. The details field must be a valid JSON string.
+
 STRICT RULES — NEVER:
 - delete platform registry
 - remove AI models
