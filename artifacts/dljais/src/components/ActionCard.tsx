@@ -7,6 +7,7 @@ import { useUpdateActionStatus, getListActionsQueryKey, getGetPendingActionCount
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { BrandIcon } from "@/components/BrandIcon";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -616,21 +617,9 @@ export function ActionCard({
 }
 
 function PlatformIcon({ platform }: { platform: string }) {
-  const lower = platform.toLowerCase();
-  let bg = "bg-slate-100 dark:bg-slate-800";
-  if (lower.includes("instagram")) bg = "bg-pink-100 dark:bg-pink-950";
-  else if (lower.includes("youtube")) bg = "bg-red-100 dark:bg-red-950";
-  else if (lower.includes("tiktok")) bg = "bg-slate-900 dark:bg-slate-800";
-  else if (lower.includes("binance")) bg = "bg-yellow-100 dark:bg-yellow-950";
-  else if (lower.includes("google")) bg = "bg-blue-100 dark:bg-blue-950";
-  else if (lower.includes("meta")) bg = "bg-blue-100 dark:bg-blue-950";
-  else if (lower.includes("shopify")) bg = "bg-green-100 dark:bg-green-950";
-  else if (lower.includes("mt5") || lower.includes("forex")) bg = "bg-purple-100 dark:bg-purple-950";
-  else if (lower.includes("food")) bg = "bg-orange-100 dark:bg-orange-950";
-  const emoji = getPlatformEmoji(platform);
   return (
-    <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center text-[15px]", bg)}>
-      {emoji}
+    <div className="w-8 h-8 rounded-lg bg-muted/60 flex items-center justify-center flex-shrink-0 overflow-hidden">
+      <BrandIcon platform={platform} size={20} />
     </div>
   );
 }
