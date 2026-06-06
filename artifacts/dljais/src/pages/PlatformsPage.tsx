@@ -239,14 +239,29 @@ function ApiKeyModal({ platform, onClose, onSuccess }: ConnectModalProps) {
     setError("");
     if (!apiKey.trim()) { setError("API Key is required"); return; }
     if (!secretKey.trim()) { setError("Secret Key is required"); return; }
-    if (needsPassphrase && !passphrase.trim()) { setError("Passphrase is required for " + platform.name); return; }
-    if (apiKey.trim().length < 16) { setError("API Key is too short — please check and try again."); return; }
-    if (secretKey.trim().length < 16) { setError("Secret Key is too short — please check and try again."); return; }
+    if (needsPassphrase && !passphrase.trim()) { setError(`Passphrase is required for ${platform.name}`); return; }
+    if (apiKey.trim().length < 16) { setError("API Key looks too short — please check and try again."); return; }
+    if (secretKey.trim().length < 16) { setError("Secret Key looks too short — please check and try again."); return; }
 
     setIsValidating(true);
-    await new Promise((r) => setTimeout(r, 1400));
-    setIsValidating(false);
-    onSuccess(`${platform.name} Account`);
+    try {
+      const base = (import.meta.env.BASE_URL ?? "/").replace(/\/$/, "");
+      const res = await fetch(`${base}/api/validate/platform`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ platformId: platform.id, apiKey: apiKey.trim(), secretKey: secretKey.trim(), passphrase: passphrase.trim() || undefined }),
+      });
+      const data = await res.json() as { ok: boolean; accountName?: string; error?: string };
+      if (!data.ok) {
+        setError(data.error ?? "Connection failed — check your API credentials and try again.");
+        setIsValidating(false);
+        return;
+      }
+      onSuccess(data.accountName ?? `${platform.name} Account`);
+    } catch {
+      setError("Network error — could not reach the validation server. Check your internet connection.");
+      setIsValidating(false);
+    }
   };
 
   return (
@@ -343,9 +358,29 @@ function BrokerModal({ platform, onClose, onSuccess }: ConnectModalProps) {
     if (password.length < 4) { setError("Password is too short"); return; }
 
     setIsVerifying(true);
-    await new Promise((r) => setTimeout(r, 1600));
-    setIsVerifying(false);
-    onSuccess(`Account ${accountId}`);
+    try {
+      const base = (import.meta.env.BASE_URL ?? "/").replace(/\/$/, "");
+      const res = await fetch(`${base}/api/validate/platform`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          platformId: platform.id,
+          apiKey: accountId.trim(),
+          secretKey: password,
+          passphrase: server.trim(),
+        }),
+      });
+      const data = await res.json() as { ok: boolean; accountName?: string; error?: string };
+      if (!data.ok) {
+        setError(data.error ?? "Could not verify credentials — check your server, account ID, and password.");
+        setIsVerifying(false);
+        return;
+      }
+      onSuccess(data.accountName ?? `Account ${accountId}`);
+    } catch {
+      setError("Network error — could not reach the server.");
+      setIsVerifying(false);
+    }
   };
 
   return (

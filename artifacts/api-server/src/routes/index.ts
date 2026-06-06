@@ -6,12 +6,14 @@ import platformsRouter from "./platforms";
 import statsRouter from "./stats";
 import aiRouter from "./ai";
 import authRouter from "./auth";
+import validateRouter from "./validate";
 
 const router: IRouter = Router();
 
 router.use(healthRouter);
 router.use(authRouter);
 router.use(aiRouter);
+router.use(validateRouter);
 router.use(conversationsRouter);
 router.use(actionsRouter);
 router.use(platformsRouter);
