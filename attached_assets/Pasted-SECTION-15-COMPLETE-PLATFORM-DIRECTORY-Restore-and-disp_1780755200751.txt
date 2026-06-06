@@ -1,0 +1,218 @@
+SECTION 15 - COMPLETE PLATFORM DIRECTORY
+
+Restore and display ALL platforms below in the Platforms page.
+
+Platforms must be grouped by category.
+
+Each platform card must support:
+
+- Connect
+- Reconnect
+- Disconnect
+- Connection Status
+- Last Sync
+- Account Information
+- Error Handling
+
+================================================
+
+SOCIAL MEDIA
+
+YouTube
+TikTok
+Instagram
+Facebook
+X (Twitter)
+LinkedIn
+Pinterest
+Snapchat
+Threads
+Telegram
+Discord
+
+================================================
+
+BUSINESS & PRODUCTIVITY
+
+Gmail
+Outlook
+Google Drive
+OneDrive
+Dropbox
+Notion
+Slack
+Zoom
+Google Meet
+
+================================================
+
+E-COMMERCE
+
+Shopify
+WooCommerce
+Amazon
+Daraz
+Etsy
+eBay
+Alibaba
+AliExpress
+Noon
+Walmart Seller
+
+================================================
+
+ADVERTISING
+
+Google Ads
+Meta Ads
+TikTok Ads
+LinkedIn Ads
+X Ads
+Pinterest Ads
+
+================================================
+
+CRYPTO & TRADING
+
+Binance
+Bitget
+Bybit
+KuCoin
+OKX
+Coinbase
+
+================================================
+
+FOREX & BROKER CONNECTIONS
+
+MetaTrader 5 (MT5)
+Exness
+XM
+IC Markets
+Pepperstone
+HFM
+
+================================================
+
+CONNECTION TYPES
+
+OAuth Platforms
+
+- YouTube
+- Gmail
+- Google Drive
+- Google Ads
+- Instagram
+- Facebook
+- Meta Ads
+- WhatsApp Business
+- TikTok
+- X
+- LinkedIn
+- Pinterest
+- Snapchat
+- Threads
+- Telegram
+- Discord
+- Notion
+- Slack
+- Zoom
+- Google Meet
+- Shopify
+- Outlook
+- OneDrive
+- Dropbox
+
+Use:
+
+Connect Button
+→ Official OAuth Popup
+→ User Login
+→ Permission Approval
+→ OAuth Callback
+→ Token Storage
+→ Connected State
+
+No manual API key entry.
+
+================================================
+
+API KEY CONNECTIONS
+
+Binance
+Bitget
+Bybit
+KuCoin
+OKX
+Coinbase
+
+Required Fields:
+
+API Key
+Secret Key
+Passphrase (if required)
+
+Validate credentials before saving.
+
+================================================
+
+BROKER CONNECTIONS
+
+MT5
+Exness
+XM
+IC Markets
+Pepperstone
+HFM
+
+Required Fields:
+
+Server
+Account Number
+Password
+
+Verify broker connection before saving.
+
+================================================
+
+AI AGENT ACCESS
+
+Connected platforms must automatically become available to:
+
+Content Agent
+YouTube Agent
+TikTok Agent
+Instagram Agent
+Facebook Agent
+SEO Agent
+Marketing Agent
+Research Agent
+Ads Agent
+Customer Support Agent
+Analytics Agent
+Email Agent
+Website Agent
+
+================================================
+
+IMPORTANT
+
+Restore original 12-platform experience.
+
+Do not remove any platform.
+
+Do not hide any platform.
+
+Show real platform logos.
+
+Use official branding.
+
+Support dark mode and mobile layout.
+
+All connections must be real.
+
+No fake connected status.
+
+No placeholder integrations.
+
+Production-ready implementation only.

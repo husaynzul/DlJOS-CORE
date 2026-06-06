@@ -6,7 +6,7 @@ import {
   getListConversationsQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Send, Mic, MicOff, Plus, Sparkles, Check, AudioLines, X, ChevronDown, Key, Download } from "lucide-react";
+import { Send, Mic, MicOff, Plus, Sparkles, Check, AudioLines, X, ChevronDown, Key, Download, FileText, ImageIcon, Film, Music, File } from "lucide-react";
 import { ActionCard } from "@/components/ActionCard";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -16,47 +16,46 @@ import { useDefaultModel } from "@/hooks/use-default-model";
 const CHIPS = ["Post to Instagram", "Trade signals", "Run Google Ads", "Order food"];
 
 const MODELS = [
-  { id: "auto",              label: "Auto",            desc: "Best for your task",         color: "text-foreground" },
-  { id: "openai",            label: "OPENAI",           desc: "GPT-4o, GPT-4o mini",        color: "text-emerald-500" },
-  { id: "anthropic",         label: "ANTHROPIC",        desc: "Claude Sonnet, Haiku",        color: "text-orange-400" },
-  { id: "google-gemini",     label: "GOOGLE_GEMINI",    desc: "Gemini Flash, Pro",           color: "text-blue-400" },
-  { id: "deepseek",          label: "DEEPSEEK",         desc: "DeepSeek Chat, Coder",        color: "text-purple-400" },
-  { id: "grokai",            label: "GROKAI",           desc: "Grok-2, Grok Vision",         color: "text-cyan-400" },
-  { id: "mistral",           label: "MISTRAL",          desc: "Mistral Large, Small",        color: "text-yellow-400" },
-  { id: "cohere",            label: "COHERE",           desc: "Command R+, Command R",       color: "text-rose-400" },
-  { id: "elevenlabs",        label: "ELEVENLABS",       desc: "Text to Speech",              color: "text-violet-400" },
-  { id: "runway",            label: "RUNWAY",           desc: "Video Generation",            color: "text-pink-400" },
-  { id: "pika",              label: "PIKA",             desc: "Video Creation",              color: "text-fuchsia-400" },
-  { id: "stable",            label: "STABLE",           desc: "Stable Diffusion",            color: "text-amber-400" },
+  { id: "auto",          label: "Auto",          desc: "Best for your task",      color: "text-foreground" },
+  { id: "openai",        label: "OPENAI",         desc: "GPT-4o, GPT-4o mini",    color: "text-emerald-500" },
+  { id: "anthropic",     label: "ANTHROPIC",      desc: "Claude Sonnet, Haiku",   color: "text-orange-400" },
+  { id: "google-gemini", label: "GOOGLE_GEMINI",  desc: "Gemini Flash, Pro",      color: "text-blue-400" },
+  { id: "deepseek",      label: "DEEPSEEK",       desc: "DeepSeek Chat, Coder",   color: "text-purple-400" },
+  { id: "grokai",        label: "GROKAI",          desc: "Grok-2, Grok Vision",    color: "text-cyan-400" },
+  { id: "mistral",       label: "MISTRAL",         desc: "Mistral Large, Small",   color: "text-yellow-400" },
+  { id: "cohere",        label: "COHERE",          desc: "Command R+, Command R",  color: "text-rose-400" },
+  { id: "elevenlabs",    label: "ELEVENLABS",      desc: "Text to Speech",         color: "text-violet-400" },
+  { id: "runway",        label: "RUNWAY",          desc: "Video Generation",       color: "text-pink-400" },
+  { id: "pika",          label: "PIKA",            desc: "Video Creation",         color: "text-fuchsia-400" },
+  { id: "stable",        label: "STABLE",          desc: "Stable Diffusion",       color: "text-amber-400" },
 ];
 
 const AI_MODES = [
-  { id: "platform", label: "DlJOS AI",      desc: "Powered by DlJOS" },
-  { id: "byok",     label: "Custom Model",  desc: "Use your own API" },
+  { id: "platform", label: "DlJOS AI",     desc: "Powered by DlJOS" },
+  { id: "byok",     label: "Custom Model", desc: "Use your own API" },
 ];
+
+interface AttachedFile {
+  id: string;
+  file: File;
+  preview?: string;
+  type: "image" | "video" | "audio" | "pdf" | "doc" | "sheet" | "text" | "other";
+}
 
 interface SpeechRecognitionEvent extends Event {
   resultIndex: number;
   results: SpeechRecognitionResultList;
 }
 interface SpeechRecognitionInstance extends EventTarget {
-  continuous: boolean;
-  interimResults: boolean;
-  lang: string;
-  start(): void;
-  stop(): void;
+  continuous: boolean; interimResults: boolean; lang: string;
+  start(): void; stop(): void;
   onresult: ((event: SpeechRecognitionEvent) => void) | null;
   onerror: ((event: Event) => void) | null;
   onend: (() => void) | null;
 }
-interface SpeechRecognitionCtor {
-  new(): SpeechRecognitionInstance;
-}
+interface SpeechRecognitionCtor { new(): SpeechRecognitionInstance; }
 declare global {
-  interface Window {
-    SpeechRecognition?: SpeechRecognitionCtor;
-    webkitSpeechRecognition?: SpeechRecognitionCtor;
-  }
+  interface Window { SpeechRecognition?: SpeechRecognitionCtor; webkitSpeechRecognition?: SpeechRecognitionCtor; }
 }
 
 interface MessageItem {
@@ -65,6 +64,32 @@ interface MessageItem {
 interface ActionCardData {
   id: number; title: string; platform: string; intent: string; status: string;
   riskLevel: string; estimatedCost?: string | null; details: string; preview?: string | null;
+}
+
+function getFileType(file: File): AttachedFile["type"] {
+  const t = file.type;
+  if (t.startsWith("image/")) return "image";
+  if (t.startsWith("video/")) return "video";
+  if (t.startsWith("audio/")) return "audio";
+  if (t === "application/pdf") return "pdf";
+  if (t.includes("word") || file.name.endsWith(".doc") || file.name.endsWith(".docx")) return "doc";
+  if (t.includes("spreadsheet") || t.includes("excel") || file.name.endsWith(".xlsx") || file.name.endsWith(".xls") || file.name.endsWith(".csv")) return "sheet";
+  if (t.startsWith("text/")) return "text";
+  return "other";
+}
+
+function FileIcon({ type, size = 14 }: { type: AttachedFile["type"]; size?: number }) {
+  const props = { size, className: "flex-shrink-0" };
+  switch (type) {
+    case "image": return <ImageIcon {...props} className={cn(props.className, "text-blue-400")} />;
+    case "video": return <Film {...props} className={cn(props.className, "text-purple-400")} />;
+    case "audio": return <Music {...props} className={cn(props.className, "text-green-400")} />;
+    case "pdf": return <FileText {...props} className={cn(props.className, "text-red-400")} />;
+    case "doc": return <FileText {...props} className={cn(props.className, "text-blue-500")} />;
+    case "sheet": return <FileText {...props} className={cn(props.className, "text-green-500")} />;
+    case "text": return <FileText {...props} className={cn(props.className, "text-muted-foreground")} />;
+    default: return <File {...props} className={cn(props.className, "text-muted-foreground")} />;
+  }
 }
 
 export default function ChatPage() {
@@ -77,7 +102,7 @@ export default function ChatPage() {
   const { defaultModel, setDefaultModel } = useDefaultModel();
   const [input, setInput] = useState("");
   const [selectedModel, setSelectedModel] = useState(defaultModel);
-  const [aiMode, setAiMode] = useState<"platform"|"byok">("platform");
+  const [aiMode, setAiMode] = useState<"platform" | "byok">("platform");
   const [modelSheetOpen, setModelSheetOpen] = useState(false);
   const [isVoiceActive, setIsVoiceActive] = useState(false);
   const [voiceTranscript, setVoiceTranscript] = useState("");
@@ -85,26 +110,26 @@ export default function ChatPage() {
   const [localActionCards, setLocalActionCards] = useState<Map<number, ActionCardData>>(new Map());
   const [isSending, setIsSending] = useState(false);
   const [streamingText, setStreamingText] = useState("");
+  const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const recRef = useRef<SpeechRecognitionInstance | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: conversation, refetch } = useGetConversation(
     conversationId!,
     { query: { enabled: !!conversationId, queryKey: getGetConversationQueryKey(conversationId!) } }
   );
 
-  useEffect(() => {
-    setSelectedModel(defaultModel);
-  }, [defaultModel]);
+  useEffect(() => { setSelectedModel(defaultModel); }, [defaultModel]);
+  useEffect(() => { if (conversation?.messages) setLocalMessages(conversation.messages as MessageItem[]); }, [conversation]);
+  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [localMessages, streamingText]);
 
   useEffect(() => {
-    if (conversation?.messages) setLocalMessages(conversation.messages as MessageItem[]);
-  }, [conversation]);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [localMessages, streamingText]);
+    return () => { attachedFiles.forEach((af) => { if (af.preview) URL.revokeObjectURL(af.preview); }); };
+  }, [attachedFiles]);
 
   const stopVoice = useCallback(() => {
     recRef.current?.stop(); recRef.current = null; setIsVoiceActive(false); setVoiceTranscript("");
@@ -131,18 +156,58 @@ export default function ChatPage() {
 
   const toggleVoice = () => isVoiceActive ? stopVoice() : startVoice();
 
+  const addFiles = useCallback((files: FileList | File[]) => {
+    const arr = Array.from(files).slice(0, 10);
+    const newItems: AttachedFile[] = arr.map((file) => {
+      const type = getFileType(file);
+      const preview = type === "image" ? URL.createObjectURL(file) : undefined;
+      return { id: `${Date.now()}-${Math.random().toString(36).slice(2)}`, file, preview, type };
+    });
+    setAttachedFiles((prev) => {
+      const combined = [...prev, ...newItems];
+      return combined.slice(0, 10);
+    });
+  }, []);
+
+  const removeFile = (id: string) => {
+    setAttachedFiles((prev) => {
+      const f = prev.find((af) => af.id === id);
+      if (f?.preview) URL.revokeObjectURL(f.preview);
+      return prev.filter((af) => af.id !== id);
+    });
+  };
+
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files?.length) { addFiles(e.target.files); e.target.value = ""; }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); setIsDragging(true); };
+  const handleDragLeave = (e: React.DragEvent) => { e.preventDefault(); setIsDragging(false); };
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault(); setIsDragging(false);
+    if (e.dataTransfer.files?.length) addFiles(e.dataTransfer.files);
+  };
+
   const handleSend = async () => {
     const text = (input + " " + voiceTranscript).trim();
-    if (!text || isSending) return;
+    const hasFiles = attachedFiles.length > 0;
+    if ((!text && !hasFiles) || isSending) return;
     if (isVoiceActive) stopVoice();
-    setInput(""); setVoiceTranscript(""); setIsSending(true); setStreamingText("");
+
+    let fullText = text;
+    if (hasFiles) {
+      const fileList = attachedFiles.map((af) => `[${af.file.name} (${af.type})]`).join(", ");
+      fullText = text ? `${text}\n\n📎 Attached: ${fileList}` : `📎 Attached files: ${fileList}`;
+    }
+
+    setInput(""); setVoiceTranscript(""); setAttachedFiles([]); setIsSending(true); setStreamingText("");
 
     try {
       let convId = conversationId;
       if (!convId) {
         const r = await fetch(`${import.meta.env.BASE_URL}api/conversations`, {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title: text.slice(0, 60) }),
+          body: JSON.stringify({ title: fullText.slice(0, 60) }),
         });
         convId = (await r.json()).id;
         qc.invalidateQueries({ queryKey: getListConversationsQueryKey() });
@@ -151,12 +216,12 @@ export default function ChatPage() {
       }
 
       const optimisticId = Date.now();
-      setLocalMessages((p) => [...p, { id: optimisticId, role: "user", content: text, createdAt: new Date().toISOString() }]);
+      setLocalMessages((p) => [...p, { id: optimisticId, role: "user", content: fullText, createdAt: new Date().toISOString() }]);
 
       const modelId = selectedModel.id === "auto" ? "gpt-4o-mini" : selectedModel.id;
       const res = await fetch(`${import.meta.env.BASE_URL}api/ai/conversations/${convId}/messages`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: text, model: modelId, aiMode }),
+        body: JSON.stringify({ content: fullText, model: modelId, aiMode }),
       });
 
       if (!res.ok || !res.body) throw new Error("Stream failed");
@@ -182,14 +247,26 @@ export default function ChatPage() {
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Could not get a response.";
       toast({ title: "Error", description: msg.slice(0, 120), variant: "destructive" });
-      setInput(text); setStreamingText("");
+      setInput(fullText); setStreamingText("");
     } finally { setIsSending(false); }
   };
 
   const isEmpty = !conversationId && localMessages.length === 0 && !streamingText;
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div
+      className={cn("flex flex-col h-full overflow-hidden transition-colors", isDragging && "bg-primary/5")}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      {isDragging && (
+        <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
+          <div className="bg-primary/10 border-2 border-dashed border-primary rounded-2xl px-8 py-6 text-primary font-semibold text-sm">
+            Drop files here
+          </div>
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto min-h-0">
         {isEmpty ? (
@@ -217,7 +294,7 @@ export default function ChatPage() {
                 <div className="flex-1 text-[14px] text-foreground leading-[1.65] pt-1">
                   {streamingText
                     ? <span>{streamingText}<span className="inline-block w-0.5 h-4 bg-foreground ml-0.5 animate-pulse align-middle" /></span>
-                    : <div className="flex gap-1.5">{[0,1,2].map(i=><div key={i} className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce" style={{animationDelay:`${i*0.15}s`}}/>)}</div>
+                    : <div className="flex gap-1.5">{[0, 1, 2].map(i => <div key={i} className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />)}</div>
                   }
                 </div>
               </div>
@@ -230,8 +307,8 @@ export default function ChatPage() {
       {isVoiceActive && (
         <div className="mx-3 mb-2 px-4 py-2.5 bg-primary/8 border border-primary/20 rounded-2xl flex items-center gap-3 flex-shrink-0">
           <div className="flex items-end gap-0.5 h-5 flex-shrink-0">
-            {[50,100,60,90,40].map((h, i) => (
-              <div key={i} className="w-1 bg-primary rounded-full" style={{ height: `${h}%`, animation: `dljos-wave 0.8s ease-in-out ${i*0.12}s infinite alternate` }} />
+            {[50, 100, 60, 90, 40].map((h, i) => (
+              <div key={i} className="w-1 bg-primary rounded-full" style={{ height: `${h}%`, animation: `dljos-wave 0.8s ease-in-out ${i * 0.12}s infinite alternate` }} />
             ))}
           </div>
           <p className="text-[13px] text-primary font-medium flex-1 truncate">{voiceTranscript || "Listening…"}</p>
@@ -242,12 +319,39 @@ export default function ChatPage() {
       <div className="flex-shrink-0 px-3 pt-2 pb-[max(12px,env(safe-area-inset-bottom))] bg-background border-t border-border">
         <div className="max-w-[700px] mx-auto">
           <div className="bg-card border border-border rounded-3xl shadow-sm focus-within:ring-1 focus-within:ring-ring transition-all overflow-hidden">
+
+            {attachedFiles.length > 0 && (
+              <div className="flex flex-wrap gap-2 px-4 pt-3">
+                {attachedFiles.map((af) => (
+                  <div key={af.id} className="relative flex items-center gap-1.5 bg-muted rounded-xl overflow-hidden group">
+                    {af.preview ? (
+                      <img src={af.preview} alt={af.file.name} className="w-10 h-10 object-cover" />
+                    ) : (
+                      <div className="w-10 h-10 flex items-center justify-center bg-muted">
+                        <FileIcon type={af.type} size={16} />
+                      </div>
+                    )}
+                    <div className="pr-6 py-1">
+                      <p className="text-[11px] font-medium text-foreground truncate max-w-[80px]">{af.file.name}</p>
+                      <p className="text-[10px] text-muted-foreground">{(af.file.size / 1024).toFixed(0)} KB</p>
+                    </div>
+                    <button
+                      onClick={() => removeFile(af.id)}
+                      className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-foreground/80 text-background flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X size={10} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <textarea
               ref={inputRef}
               value={input + (voiceTranscript ? " " + voiceTranscript : "")}
               onChange={(e) => { setInput(e.target.value); setVoiceTranscript(""); }}
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-              placeholder="Message DlJOS…"
+              placeholder={attachedFiles.length > 0 ? "Add a message or send files…" : "Message DlJOS…"}
               rows={1}
               readOnly={isVoiceActive}
               className="w-full resize-none bg-transparent text-[14px] text-foreground placeholder:text-muted-foreground px-4 pt-3.5 pb-2 focus:outline-none leading-relaxed"
@@ -257,7 +361,26 @@ export default function ChatPage() {
 
             <div className="flex items-center justify-between px-3 pb-2.5">
               <div className="flex items-center gap-2">
-                <button className="w-8 h-8 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent transition-colors" data-testid="button-add">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.md"
+                  className="hidden"
+                  onChange={handleFileInput}
+                  data-testid="file-input"
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className={cn(
+                    "w-8 h-8 rounded-full border flex items-center justify-center transition-colors",
+                    attachedFiles.length > 0
+                      ? "border-primary text-primary bg-primary/10"
+                      : "border-border text-muted-foreground hover:text-foreground hover:bg-accent"
+                  )}
+                  data-testid="button-add"
+                  title="Attach files"
+                >
                   <Plus size={16} />
                 </button>
 
@@ -280,9 +403,9 @@ export default function ChatPage() {
                 </button>
 
                 <button onClick={handleSend}
-                  disabled={!(input.trim() || voiceTranscript.trim()) || isSending}
+                  disabled={!(input.trim() || voiceTranscript.trim() || attachedFiles.length > 0) || isSending}
                   className={cn("w-9 h-9 rounded-full flex items-center justify-center transition-all",
-                    (input.trim() || voiceTranscript.trim()) && !isSending
+                    (input.trim() || voiceTranscript.trim() || attachedFiles.length > 0) && !isSending
                       ? "bg-foreground text-background" : "bg-muted text-muted-foreground cursor-not-allowed"
                   )} data-testid="button-send">
                   {isSending ? <AudioLines size={16} className="animate-pulse" /> : <Send size={15} />}
@@ -290,21 +413,19 @@ export default function ChatPage() {
               </div>
             </div>
           </div>
+
+          {attachedFiles.length > 0 && (
+            <p className="text-[11px] text-muted-foreground text-center mt-1.5">
+              {attachedFiles.length} file{attachedFiles.length > 1 ? "s" : ""} attached · Drag & drop more or click +
+            </p>
+          )}
         </div>
       </div>
 
-      {/* ── Model selector — centered popup modal ── */}
       {modelSheetOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          onClick={() => setModelSheetOpen(false)}
-        >
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setModelSheetOpen(false)}>
           <div className="absolute inset-0 bg-black/50 backdrop-blur-[3px]" />
-          <div
-            className="relative bg-background rounded-2xl shadow-2xl w-full max-w-[360px] max-h-[80dvh] overflow-hidden flex flex-col animate-in zoom-in-95 fade-in duration-150 z-10"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
+          <div className="relative bg-background rounded-2xl shadow-2xl w-full max-w-[360px] max-h-[80dvh] overflow-hidden flex flex-col animate-in zoom-in-95 fade-in duration-150 z-10" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-4 py-3.5 border-b border-border flex-shrink-0">
               <div>
                 <p className="text-[15px] font-semibold text-foreground">Select model</p>
@@ -315,12 +436,11 @@ export default function ChatPage() {
               </button>
             </div>
 
-            {/* AI Mode tabs */}
             <div className="px-4 pt-3 pb-2 flex-shrink-0">
               <div className="p-1 bg-muted rounded-xl flex gap-1">
                 {AI_MODES.map((m) => (
                   <button key={m.id}
-                    onClick={() => setAiMode(m.id as "platform"|"byok")}
+                    onClick={() => setAiMode(m.id as "platform" | "byok")}
                     className={cn("flex-1 py-2 rounded-lg text-[13px] font-medium transition-all",
                       aiMode === m.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"
                     )} data-testid={`ai-mode-${m.id}`}>
@@ -330,10 +450,7 @@ export default function ChatPage() {
               </div>
             </div>
 
-            {/* Content area */}
             <div className="overflow-y-auto flex-1">
-
-              {/* DlJOS AI → show all 11 AI providers */}
               {aiMode === "platform" && (
                 <div className="px-4 pb-4 divide-y divide-border">
                   {MODELS.map((m) => (
@@ -342,9 +459,7 @@ export default function ChatPage() {
                       className="w-full flex items-center gap-3 py-3 hover:opacity-75 transition-opacity text-left"
                       data-testid={`model-${m.id}`}
                     >
-                      {m.id !== "auto" && (
-                        <div className={cn("w-2 h-2 rounded-full flex-shrink-0", m.color.replace("text-", "bg-"))} />
-                      )}
+                      {m.id !== "auto" && <div className={cn("w-2 h-2 rounded-full flex-shrink-0", m.color.replace("text-", "bg-"))} />}
                       {m.id === "auto" && <div className="w-2 h-2 flex-shrink-0" />}
                       <div className="flex-1 min-w-0">
                         <p className={cn("text-[14px] font-medium", m.color)}>{m.label}</p>
@@ -356,7 +471,6 @@ export default function ChatPage() {
                 </div>
               )}
 
-              {/* Custom Model → Import API button only */}
               {aiMode === "byok" && (
                 <div className="px-4 pb-6 pt-5 flex flex-col items-center gap-4">
                   <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center">
